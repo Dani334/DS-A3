@@ -1,12 +1,10 @@
-JFLAGS = -g -cp lib/*.jar CommunicationHandler.java
+JFLAGS = -g -cp lib/*.jar
 JC = javac
 .SUFFIXES: .java .class
 .java.class:
 	$(JC) $(JFLAGS) $*.java
 CLASSES = \
-		CommunicationHandler.java \
-		Proposer.java \
-		Acceptor.java 
+		Node.java
 
 default: classes
 
