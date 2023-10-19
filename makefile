@@ -5,6 +5,7 @@ JC = javac
 	$(JC) $(JFLAGS) $*.java
 CLASSES = \
 		Node.java \
+		Paxos.java \
 		Message.java \
 		Prepare.java \
 		Promise.java \
