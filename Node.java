@@ -7,38 +7,47 @@ import java.util.concurrent.CountDownLatch;
 
 public class Node extends Thread {
     
-    private int nodeID;
+    protected int nodeID;
 
-    private int lastProposalNumber;
+    protected int lastProposalNumber;
 
-    private int highestAcceptedProposal;
+    protected int highestAcceptedProposal;
     
-    private int acceptedProposal = -1;
-    private int acceptedValue = -1;
+    protected int acceptedProposal = -1;
+    protected int acceptedValue = -1;
 
-    private int previousHighestProposalNumber;
-    private int previousHighestProposalValue;
+    protected int previousHighestProposalNumber;
+    protected int previousHighestProposalValue;
 
-    private int receivedPromises = 0;
+    protected int receivedPromises = 0;
 
-    private int numNotAccepted = 0;
-    private int numAccepted = 0;
+    protected int numNotAccepted = 0;
+    protected int numAccepted = 0;
 
-    private Vector<Integer> acceptorIds = new Vector<>();
+    protected Vector<Integer> acceptorIds = new Vector<>();
 
-    private ServerSocket serverSocket;
+    protected ServerSocket serverSocket;
     
     ObjectInputStream inObj;
     ObjectOutputStream outObj;
 
-    private final CountDownLatch responseLatch = new CountDownLatch(4);
+    Proposer p1;
+    Proposer p2;
 
     Boolean PREPARE = true;
     Boolean PROMISE = true;
     Boolean ACCEPT = true;
     Boolean ACCEPTED = true;
 
-    public Node(int nodeID) throws IOException {
+    public Node(int nodeID, int proposalNumber) throws Exception {
+        this.nodeID = nodeID;
+        this.lastProposalNumber = proposalNumber;
+    }
+
+    public Node(int nodeID, Proposer p1, Proposer p2) throws IOException {
+        
+        this.p1 = p1;
+        this.p2 = p2;
         this.nodeID = nodeID;
         highestAcceptedProposal = -1;
         try {
@@ -76,6 +85,7 @@ public class Node extends Thread {
             Promise promise = (Promise) message;
             if(PROMISE) printMessage(promise);
             handlePromise(promise);
+            
         }
         else if(message.name.equals("Accept")) {
             Accept accept = (Accept) message;
@@ -112,29 +122,28 @@ public class Node extends Thread {
         System.out.println();
     }
 
-    public void sendOutPrepares(int proposalNumber) throws Exception {
+    // public void sendOutPrepares(int proposalNumber) throws Exception {
 
-        this.lastProposalNumber = proposalNumber;
+    //     this.lastProposalNumber = proposalNumber;
 
-        for(int i = 1; i <= 9; i++) {
-            if(i != this.nodeID)
-                this.sendPrepare(i, this.lastProposalNumber);
-        }
+    //     for(int i = 1; i <= 9; i++) {
+    //         if(i != this.nodeID)
+    //             this.sendPrepare(i, this.lastProposalNumber);
+    //     }
         
-        this.lastProposalNumber++;
-    }
+    //     this.lastProposalNumber++;
+    // }
 
-    public void sendPrepare(int targetID, int proposalNumber) throws Exception {
+    // public void sendPrepare(int targetID, int proposalNumber) throws Exception {
 
-        Message prepare = new Prepare(proposalNumber, this.nodeID, targetID);
-        Socket socket = new Socket("127.0.0.1", 6000 + targetID);
-        outObj = new ObjectOutputStream(socket.getOutputStream());
-        outObj.writeObject(prepare);
-        outObj.flush();
-        socket.close();
+    //     Message prepare = new Prepare(proposalNumber, this.nodeID, targetID);
+    //     Socket socket = new Socket("127.0.0.1", 6000 + targetID);
+    //     outObj = new ObjectOutputStream(socket.getOutputStream());
+    //     outObj.writeObject(prepare);
+    //     outObj.flush();
+    //     socket.close();
 
-        
-    }
+    // }
 
     public void handlePrepare(Prepare message) throws Exception {
         
@@ -151,13 +160,13 @@ public class Node extends Thread {
 
     public void sendPromise(int proposalNumber, int targetID) throws Exception {
         
-        double rand = new Random().nextDouble();
-        if(rand > 0.8) {
-            System.out.println("offline");
-            return;
-        }
+        // double rand = new Random().nextDouble();
+        // if(rand > 0.8) {
+        //     System.out.println("offline");
+        //     return;
+        // }
 
-        Promise promise = new Promise(-1, this.acceptedProposal, this.acceptedValue, this.nodeID, targetID);
+        Promise promise = new Promise(proposalNumber, this.acceptedProposal, this.acceptedValue, this.nodeID, targetID);
         Socket socket = new Socket("127.0.0.1", 6000 + targetID);
         outObj = new ObjectOutputStream(socket.getOutputStream());
         outObj.writeObject(promise);
@@ -170,52 +179,68 @@ public class Node extends Thread {
 
     public void handlePromise(Promise message) throws Exception {
 
-        receivedPromises++;
-        responseLatch.countDown();
-        acceptorIds.add(message.from);
+        int toId = message.to;
+        if(toId == p1.nodeID) {
+            p1.latch.countDown();
+            p1.acceptorIds.add(message.from);
+            p1.receivedPromises++;
+        } else {
+            p2.latch.countDown();
+            p2.acceptorIds.add(message.from);
+            p2.receivedPromises++;
+        }
 
-        int acceptorsProposal = message.proposalNumber;
+        int acceptorsProposal = message.acceptedProposal;
 
         if(acceptorsProposal == -1) {
-            numNotAccepted++;
+            if(toId == p1.nodeID) {
+                p1.numNotAccepted++;
+            } else {
+                p2.numNotAccepted++;
+            }
         } else {
             if(acceptorsProposal > previousHighestProposalNumber) {
-                previousHighestProposalNumber = acceptorsProposal;
-                previousHighestProposalValue = message.acceptedValue;
+                if(toId == p1.nodeID) {
+                    p1.previousHighestProposalNumber = acceptorsProposal;
+                    p1.previousHighestProposalValue = message.acceptedValue;
+                } else {
+                    p2.previousHighestProposalNumber = acceptorsProposal;
+                    p2.previousHighestProposalValue = message.acceptedValue;
+                }
             }   
         }
 
     }
 
-    public void sendOutAccepts(int proposalNumber) throws Exception {
+    // public void sendOutAccepts(int proposalNumber) throws Exception {
         
-        while(true) {
-            if(this.receivedPromises >= 4) break;
-        }
-        int proposalValue = -1;
-        if(numNotAccepted >= 4) {
-            proposalValue = this.nodeID;
-        } else {
-            proposalValue = previousHighestProposalValue;
-        }
+    //     while(true) {
+    //         if(this.receivedPromises >= 4) break;
+    //     }
+    //     int proposalValue = -1;
+    //     if(numNotAccepted >= 4) {
+    //         proposalValue = this.nodeID;
+    //     } else {
+    //         proposalValue = previousHighestProposalValue;
+    //     }
         
 
-        for(int i = 0; i < acceptorIds.size(); i++) {
-            this.sendAccept(acceptorIds.elementAt(i), proposalNumber, proposalValue);
-        }
+    //     for(int i = 0; i < acceptorIds.size(); i++) {
+    //         this.sendAccept(acceptorIds.elementAt(i), proposalNumber, proposalValue);
+    //     }
 
-    }
+    // }
 
-    public void sendAccept(int targetID, int proposalNumber, int proposalValue) throws Exception {
+    // public void sendAccept(int targetID, int proposalNumber, int proposalValue) throws Exception {
 
-        Accept accept = new Accept(proposalNumber, proposalValue, this.nodeID, targetID);
+    //     Accept accept = new Accept(proposalNumber, proposalValue, this.nodeID, targetID);
 
-        Socket socket = new Socket("127.0.0.1", 6000 + targetID);
-        outObj = new ObjectOutputStream(socket.getOutputStream());
-        outObj.writeObject(accept);
-        outObj.flush();
-        socket.close();
-    }
+    //     Socket socket = new Socket("127.0.0.1", 6000 + targetID);
+    //     outObj = new ObjectOutputStream(socket.getOutputStream());
+    //     outObj.writeObject(accept);
+    //     outObj.flush();
+    //     socket.close();
+    // }
 
     public void handleAccept(Accept accept) throws Exception {
         
@@ -252,34 +277,29 @@ public class Node extends Thread {
 
     public static void main(String args[]) {
         try {
-            Node m1 = new Node(1);
-            Node m2 = new Node(2);
-            Node m3 = new Node(3);
-            Node m4 = new Node(4);
-            Node m5 = new Node(5);
-            Node m6 = new Node(6);
-            Node m7 = new Node(7);
-            Node m8 = new Node(8);
-            Node m9 = new Node(9);
-
-            Node[] nodes = {m1, m2, m3, m4, m5, m6, m7, m8, m9};
-
-            for(Node node : nodes) node.start();
 
             Random rand = new Random();
 
-            int p1 = rand.nextInt(3);
+            int p1 = rand.nextInt(3) + 1;
             int p2 = p1;
-            while(p1 == p2) p2 = rand.nextInt(3);
+            while(p1 == p2) p2 = rand.nextInt(3) + 1;
             
-            nodes[p1].sendOutPrepares(1);
-            nodes[p1].responseLatch.await();
-            
-            nodes[p1].sendOutAccepts(1);
-            Thread.sleep(1500);
-            System.out.println(nodes[p1].receivedPromises);
-            System.out.println(nodes[p1].numAccepted);
-            // nodes[p2].sendOutPrepares(2);
+            Proposer proposer1 = new Proposer(p1, 1);
+            Proposer proposer2 = new Proposer(p2, 2);
+
+            Node[] nodes =  new Node[9];
+            for(int i = 1; i <= 9; i++) {
+                // if(i != p1 && i != p2) {
+                    nodes[i-1] = new Node(i, proposer1, proposer2);
+                    nodes[i-1].start();
+                // }
+            }
+
+            proposer1.start();
+            // proposer2.start();
+
+            // proposer2.Phase1(3);
+
             
 
         } catch (Exception e) {
