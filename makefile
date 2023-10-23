@@ -1,4 +1,4 @@
-JFLAGS = -g -cp lib/*.jar Message.java Prepare.java Promise.java Accept.java Accepted.java Proposer.java Node.java
+JFLAGS = -g -cp lib/*.jar Message.java Prepare.java Promise.java Accept.java Accepted.java Nack.java Proposer.java Node.java
 JC = javac
 .SUFFIXES: .java .class
 .java.class:
@@ -10,7 +10,8 @@ CLASSES = \
 		Prepare.java \
 		Promise.java \
 		Accept.java \
-		Accepted.java 
+		Accepted.java \
+		Nack.java
  
 default: classes
 

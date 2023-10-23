@@ -2,24 +2,31 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.Vector;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class Proposer extends Node {
 
     private int lastProposalNumber;
-    protected int receivedPromises = 0;
+    public int receivedPromises = 0;
 
-    protected int previousHighestProposalNumber;
-    protected int previousHighestProposalValue;
+    public int previousHighestProposalNumber;
+    public int previousHighestProposalValue;
 
-    protected int numNotAccepted = 0;
-    protected int numAccepted = 0;
+    public int numNotAccepted = 0;
+    public int numAccepted = 0;
+    public int NACKed = 0;
 
-    protected final CountDownLatch latch = new CountDownLatch(4);
-    protected Vector<Integer> acceptorIds = new Vector<>();
+    public final CountDownLatch latchPromise; 
+    public final CountDownLatch latchAccept; 
+    private static final Object lock = new Object();
+
+    public Vector<Integer> acceptorIds = new Vector<>();
     
     public Proposer(int nodeID, int proposalNumber) throws Exception {
         super(nodeID, proposalNumber);
-        lastProposalNumber = 1;
+        lastProposalNumber = proposalNumber;
+        latchPromise = new CountDownLatch(4);
+        latchAccept = new CountDownLatch(4);
     }
 
     @Override
@@ -43,15 +50,15 @@ public class Proposer extends Node {
         
         this.lastProposalNumber++;
 
-        this.latch.await();
+        this.latchPromise.await(2000, TimeUnit.MILLISECONDS);
         Phase2(proposalNumber);
     }
 
     public void Phase2(int proposalNumber) throws Exception {
         
-        while(true) {
-            if(this.receivedPromises >= 4) break;
-        }
+        // while(true) {
+        //     if(this.receivedPromises >= 4) break;
+        // }
 
         int proposalValue = -1;
         if(numNotAccepted >= 4) {
@@ -60,10 +67,41 @@ public class Proposer extends Node {
             proposalValue = previousHighestProposalValue;
         }
         
-        
         for(int i = 0; i < acceptorIds.size(); i++) {
             this.sendAccept(acceptorIds.elementAt(i), proposalNumber, proposalValue);
         }
+
+        this.latchAccept.await(2000, TimeUnit.MILLISECONDS);
+
+        synchronized(lock) {
+            System.out.println("*****Member " + this.nodeID + " stats*******");
+            System.out.println("Accepted: " + this.numAccepted);
+            System.out.println("Nacked: " + this.NACKed);
+            System.out.println("Received Promises: " + this.receivedPromises);
+            System.out.println();
+        }
+
+        // if we recieved less than 4 Accepted's, it means we do not have a majority, so we reset variables and try again
+        // It could mean that there is already a value accepted or it could mean some messages were dropped.
+        if(this.numAccepted < 4) {
+            this.receivedPromises = 0;
+            this.numAccepted = 0;
+            this.NACKed = 0;
+            this.numNotAccepted = 0;
+            Phase1(this.lastProposalNumber);
+        } else {
+            // Do we have to send the accepted value?
+            synchronized(lock) {
+                this.acceptedProposal = proposalNumber;
+                this.acceptedValue = proposalValue;
+                System.out.println("Accepted Proposal Number: " + this.acceptedProposal);
+                System.out.println("Accepted Proposal Value: " + this.acceptedValue);
+                System.out.println();
+
+            }
+        }
+
+
     }
 
     public void sendPrepare(int targetID, int proposalNumber) throws Exception {
@@ -88,9 +126,5 @@ public class Proposer extends Node {
         socket.close();
         
     }
-
-    // public void handleAccepted() {
-    //     this.numAccepted++;
-    // }
 
 }
