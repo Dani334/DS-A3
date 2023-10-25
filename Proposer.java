@@ -15,9 +15,10 @@ public class Proposer extends Node {
     public int numNotAccepted = 0;
     public int numAccepted = 0;
     public int NACKed = 0;
+    public Boolean[] NACKedNodes = new Boolean[9]; 
 
-    public final CountDownLatch latchPromise; 
-    public final CountDownLatch latchAccept; 
+    public CountDownLatch latchPromise; 
+    public CountDownLatch latchAccept; 
     private static final Object lock = new Object();
 
     public Vector<Integer> acceptorIds = new Vector<>();
@@ -55,17 +56,14 @@ public class Proposer extends Node {
     }
 
     public void Phase2(int proposalNumber) throws Exception {
-        
-        // while(true) {
-        //     if(this.receivedPromises >= 4) break;
-        // }
 
         int proposalValue = -1;
         if(numNotAccepted >= 4) {
             proposalValue = this.nodeID;
         } else {
-            proposalValue = previousHighestProposalValue;
+            proposalValue = this.previousHighestProposalValue;
         }
+        
         
         for(int i = 0; i < acceptorIds.size(); i++) {
             this.sendAccept(acceptorIds.elementAt(i), proposalNumber, proposalValue);
@@ -75,15 +73,20 @@ public class Proposer extends Node {
 
         synchronized(lock) {
             System.out.println("*****Member " + this.nodeID + " stats*******");
+            int propNum = this.lastProposalNumber - 1;
+            System.out.println("Proposal Number: " + propNum);
             System.out.println("Accepted: " + this.numAccepted);
             System.out.println("Nacked: " + this.NACKed);
             System.out.println("Received Promises: " + this.receivedPromises);
             System.out.println();
         }
 
-        // if we recieved less than 4 Accepted's, it means we do not have a majority, so we reset variables and try again
+        // if we received less than 4 Accepted's, it means we do not have a majority, so we reset variables and try again
         // It could mean that there is already a value accepted or it could mean some messages were dropped.
         if(this.numAccepted < 4) {
+            latchPromise = new CountDownLatch(4);
+            latchAccept = new CountDownLatch(4);
+            this.acceptorIds.clear();
             this.receivedPromises = 0;
             this.numAccepted = 0;
             this.NACKed = 0;
@@ -91,9 +94,9 @@ public class Proposer extends Node {
             Phase1(this.lastProposalNumber);
         } else {
             // Do we have to send the accepted value?
+            this.acceptedProposal = proposalNumber;
+            this.acceptedValue = proposalValue;
             synchronized(lock) {
-                this.acceptedProposal = proposalNumber;
-                this.acceptedValue = proposalValue;
                 System.out.println("Accepted Proposal Number: " + this.acceptedProposal);
                 System.out.println("Accepted Proposal Value: " + this.acceptedValue);
                 System.out.println();

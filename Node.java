@@ -23,6 +23,8 @@ public class Node extends Thread {
     protected int numNotAccepted = 0;
     protected int numAccepted = 0;
 
+    protected int receivedReply = 0;
+
     protected Vector<Integer> acceptorIds = new Vector<>();
 
     protected ServerSocket serverSocket;
@@ -132,7 +134,7 @@ public class Node extends Thread {
     }
 
     public void handlePrepare(Prepare message) throws Exception {
-        
+
         int proposalNumber = message.proposalNumber;
         
         if(proposalNumber > this.highestPromisedProposal) {
@@ -164,7 +166,7 @@ public class Node extends Thread {
             p1.latchPromise.countDown();
             p1.acceptorIds.add(message.from);
             p1.receivedPromises++;
-        } else {
+        } else if(toId == p2.nodeID) {
             p2.latchPromise.countDown();
             p2.acceptorIds.add(message.from);
             p2.receivedPromises++;
@@ -175,19 +177,18 @@ public class Node extends Thread {
         if(acceptorsProposal == -1) {
             if(toId == p1.nodeID) {
                 p1.numNotAccepted++;
-            } else {
+            } else if(toId == p2.nodeID) {
                 p2.numNotAccepted++;
             }
         } else {
-            if(acceptorsProposal > previousHighestProposalNumber) {
-                if(toId == p1.nodeID) {
-                    p1.previousHighestProposalNumber = acceptorsProposal;
-                    p1.previousHighestProposalValue = message.acceptedValue;
-                } else {
-                    p2.previousHighestProposalNumber = acceptorsProposal;
-                    p2.previousHighestProposalValue = message.acceptedValue;
-                }
-            }   
+
+            if(acceptorsProposal > p1.previousHighestProposalNumber && toId == p1.nodeID) {
+                p1.previousHighestProposalNumber = acceptorsProposal;
+                p1.previousHighestProposalValue = message.acceptedValue;
+            } else if(acceptorsProposal > p2.previousHighestProposalNumber && toId == p2.nodeID) {
+                p2.previousHighestProposalNumber = acceptorsProposal;
+                p2.previousHighestProposalValue = message.acceptedValue;
+            } 
         }
 
     }
@@ -246,7 +247,7 @@ public class Node extends Thread {
         if(toId == p1.nodeID) {
             p1.numAccepted++;
             p1.latchAccept.countDown();
-        } else {
+        } else if(toId == p2.nodeID) {
             p2.numAccepted++;
             p2.latchAccept.countDown();
         }
@@ -256,9 +257,15 @@ public class Node extends Thread {
         int toId = nack.to;
         if(toId == p1.nodeID) {
             p1.NACKed++;
-        } else {
+        } else if(toId == p2.nodeID) {
             p2.NACKed++;
         }
+
+        // if(p1.nodeID == toId) {
+        //     System.out.println(nodeID + " Nacked value: " + p1.NACKed);
+        // } else if(p2.nodeID == toId) {
+        //     System.out.println(nodeID + " Nacked value: " + p2.NACKed);
+        // }
     }
 
     public static void main(String args[]) {
