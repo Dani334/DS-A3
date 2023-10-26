@@ -8,44 +8,29 @@ public class Node extends Thread {
     
     protected int nodeID;
 
-    protected int lastProposalNumber;
-
     protected int highestPromisedProposal;
     
     protected int acceptedProposal = -1;
     protected int acceptedValue = -1;
 
-    protected int previousHighestProposalNumber;
-    protected int previousHighestProposalValue;
-
-    protected int receivedPromises = 0;
-
-    protected int numNotAccepted = 0;
-    protected int numAccepted = 0;
-
-    protected int receivedReply = 0;
-
-    protected Vector<Integer> acceptorIds = new Vector<>();
-
-    protected ServerSocket serverSocket;
+    private ServerSocket serverSocket;
     
-    ObjectInputStream inObj;
-    ObjectOutputStream outObj;
+    protected ObjectInputStream inObj;
+    protected ObjectOutputStream outObj;
 
-    Proposer p1;
-    Proposer p2;
+    private Proposer p1;
+    private Proposer p2;
 
     private static final Object lock = new Object();
 
-    Boolean PREPARE = false;
-    Boolean PROMISE = false;
-    Boolean ACCEPT = false;
-    Boolean ACCEPTED = false;
-    Boolean NACK = false;
+    private Boolean PREPARE = false;
+    private Boolean PROMISE = false;
+    private Boolean ACCEPT = false;
+    private Boolean ACCEPTED = false;
+    private Boolean NACK = false;
 
     public Node(int nodeID, int proposalNumber) throws Exception {
         this.nodeID = nodeID;
-        this.lastProposalNumber = proposalNumber;
     }
 
     public Node(int nodeID, Proposer p1, Proposer p2) throws IOException {
@@ -78,6 +63,14 @@ public class Node extends Thread {
         
         inObj = new ObjectInputStream(socket.getInputStream());
         outObj = new ObjectOutputStream(socket.getOutputStream());
+
+        if(this.nodeID == p1.nodeID) {
+            p1.latchReply.countDown();
+            p1.receivedReplies++;
+        } else if(this.nodeID == p2.nodeID) {
+            p2.latchReply.countDown();
+            p2.receivedReplies++;
+        }
 
         Message message = (Message) inObj.readObject();
 
@@ -199,24 +192,12 @@ public class Node extends Thread {
         int proposalNumber = accept.proposalNumber;
         int proposalValue = accept.proposalValue;
 
-        if(this.nodeID == 1 || this.nodeID == 2 || this.nodeID == 3) {
-            sendNack(recievedFrom, proposalNumber);
-        } else {
-            if(proposalNumber >= this.highestPromisedProposal) {        
-                this.acceptedProposal = proposalNumber;
-                this.acceptedValue = proposalValue;
-                double rand = new Random().nextDouble();
-                if(rand < 0.7) {
-                    sendAccepted(recievedFrom, proposalNumber, proposalValue);    
-                } else {
-                    sendNack(recievedFrom, proposalNumber);
-                }
+        this.acceptedProposal = proposalNumber;
+        this.acceptedValue = proposalValue;
+        if(proposalNumber >= this.highestPromisedProposal) sendAccepted(recievedFrom, proposalNumber, proposalValue);  
+        else sendNack(recievedFrom, proposalNumber);
 
-                
-            } else {
-                sendNack(recievedFrom, proposalNumber);
-            }
-        }
+        
     }
 
     public void sendAccepted(int targetID, int proposalNumber, int proposalValue) throws Exception {
@@ -260,12 +241,6 @@ public class Node extends Thread {
         } else if(toId == p2.nodeID) {
             p2.NACKed++;
         }
-
-        // if(p1.nodeID == toId) {
-        //     System.out.println(nodeID + " Nacked value: " + p1.NACKed);
-        // } else if(p2.nodeID == toId) {
-        //     System.out.println(nodeID + " Nacked value: " + p2.NACKed);
-        // }
     }
 
     public static void main(String args[]) {
@@ -288,8 +263,6 @@ public class Node extends Thread {
 
             proposer1.start();
             proposer2.start();
-
-
             
 
         } catch (Exception e) {
