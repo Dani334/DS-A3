@@ -21,6 +21,8 @@ public class Node extends Thread {
     private Proposer p1;
     private Proposer p2;
 
+    public boolean delayed;
+
     private static final Object lock = new Object();
 
     private Boolean PREPARE = false;
@@ -47,8 +49,9 @@ public class Node extends Thread {
      * @param p2 Proposer 2
      * @throws IOException
      */
-    public Node(int nodeID, Proposer p1, Proposer p2) throws IOException {
+    public Node(int nodeID, Proposer p1, Proposer p2, boolean delayed) throws IOException {
         
+        this.delayed = delayed;
         this.p1 = p1;
         this.p2 = p2;
         this.nodeID = nodeID;
@@ -56,23 +59,25 @@ public class Node extends Thread {
         try {
             serverSocket = new ServerSocket(6000 + nodeID);
         } catch(Exception e) {
-            System.out.println(e.getMessage());
+            System.out.println("Constructor exception occured: " + e.getMessage());
         }
     }
 
     /**
-     * This functions starts a new Thread instance, and waits for connections through sockets
+     * This function starts a new Thread instance, and waits for connections through sockets
      * 
      */
     @Override
     public void run() {
         try {
             while(true) {
-                Socket socket = serverSocket.accept();
-                handleConnection(socket);
+                if(serverSocket != null) {
+                    Socket socket = serverSocket.accept();
+                    handleConnection(socket);
+                }
             }
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            
         }
 
     }
@@ -91,7 +96,7 @@ public class Node extends Thread {
         if(this.nodeID == p1.nodeID) {
             p1.latchReply.countDown();
             p1.receivedReplies++;
-        } else if(this.nodeID == p2.nodeID) {
+        } else if(p2 != null && this.nodeID == p2.nodeID) {
             p2.latchReply.countDown();
             p2.receivedReplies++;
         }
@@ -211,7 +216,7 @@ public class Node extends Thread {
             p1.latchPromise.countDown();
             p1.acceptorIds.add(message.from);
             p1.receivedPromises++;
-        } else if(toId == p2.nodeID) {
+        } else if(p2 != null && toId == p2.nodeID) {
             p2.latchPromise.countDown();
             p2.acceptorIds.add(message.from);
             p2.receivedPromises++;
@@ -222,7 +227,7 @@ public class Node extends Thread {
         if(acceptorsProposal == -1) {
             if(toId == p1.nodeID) {
                 p1.numNotAccepted++;
-            } else if(toId == p2.nodeID) {
+            } else if(p2 != null && toId == p2.nodeID) {
                 p2.numNotAccepted++;
             }
         } else {
@@ -230,7 +235,7 @@ public class Node extends Thread {
             if(acceptorsProposal > p1.previousHighestProposalNumber && toId == p1.nodeID) {
                 p1.previousHighestProposalNumber = acceptorsProposal;
                 p1.previousHighestProposalValue = message.acceptedValue;
-            } else if(acceptorsProposal > p2.previousHighestProposalNumber && toId == p2.nodeID) {
+            } else if(p2 != null && acceptorsProposal > p2.previousHighestProposalNumber && toId == p2.nodeID) {
                 p2.previousHighestProposalNumber = acceptorsProposal;
                 p2.previousHighestProposalValue = message.acceptedValue;
             } 
@@ -310,7 +315,7 @@ public class Node extends Thread {
         if(toId == p1.nodeID) {
             p1.numAccepted++;
             p1.latchAccept.countDown();
-        } else if(toId == p2.nodeID) {
+        } else if(p2 != null && toId == p2.nodeID) {
             p2.numAccepted++;
             p2.latchAccept.countDown();
         }
@@ -326,9 +331,18 @@ public class Node extends Thread {
         int toId = nack.to;
         if(toId == p1.nodeID) {
             p1.NACKed++;
-        } else if(toId == p2.nodeID) {
+        } else if(p2 != null && toId == p2.nodeID) {
             p2.NACKed++;
         }
+    }
+
+    /**
+     * Closes the serverSocket of each node
+     * 
+     * @throws Exception
+     */
+    public void close() throws Exception {
+        serverSocket.close();
     }
 
     /**
@@ -350,7 +364,7 @@ public class Node extends Thread {
 
             Node[] nodes =  new Node[9];
             for(int i = 1; i <= 9; i++) {
-                nodes[i-1] = new Node(i, proposer1, proposer2);
+                nodes[i-1] = new Node(i, proposer1, proposer2, false);
                 nodes[i-1].start();
             }
 

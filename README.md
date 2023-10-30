@@ -7,12 +7,12 @@ The protocol starts by randomly creating two proposers between 1-3. It then star
 
 There are some extra classes in use
 
-Message.java
-Prepare.java
-Promise.java
-Accept.java
-Accepted.java
-Nack.java
+- Message.java
+- Prepare.java
+- Promise.java
+- Accept.java
+- Accepted.java
+- Nack.java
 
 All used to create the messages used in communication
 
@@ -51,3 +51,5 @@ java testCase_immediateReplies
 java testCase_delayedReplies
 
 ```
+
+Please note that the amount of test cases within each major test case can be set, for example in testCase_immediateReplies.java, `int test1Cases = 30;` can be set to equal a higher number if you would like more randomised tests to be run, just ensure you are using `make` again before running `java testCase_immediateReplies` 

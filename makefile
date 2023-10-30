@@ -13,7 +13,8 @@ CLASSES = \
 		Accept.java \
 		Accepted.java \
 		Nack.java \
-		testCase_immediateReplies.java
+		testCase_immediateReplies.java \
+		testCase_delayedReplies.java
  
 default: classes
 
