@@ -29,10 +29,24 @@ public class Node extends Thread {
     private Boolean ACCEPTED = false;
     private Boolean NACK = false;
 
-    public Node(int nodeID, int proposalNumber) throws Exception {
+    /**
+     * This constructor is used by the proposer sub-class and initialises node id
+     * 
+     * @param nodeID Id of the node
+     * @throws Exception
+     */
+    public Node(int nodeID) throws Exception {
         this.nodeID = nodeID;
     }
 
+    /**
+     * This constructor is used by the Node class to initialise nodeID, proposers and create sockets for connections
+     * 
+     * @param nodeID id of the node
+     * @param p1 Proposer 1
+     * @param p2 Proposer 2
+     * @throws IOException
+     */
     public Node(int nodeID, Proposer p1, Proposer p2) throws IOException {
         
         this.p1 = p1;
@@ -46,6 +60,10 @@ public class Node extends Thread {
         }
     }
 
+    /**
+     * This functions starts a new Thread instance, and waits for connections through sockets
+     * 
+     */
     @Override
     public void run() {
         try {
@@ -59,6 +77,12 @@ public class Node extends Thread {
 
     }
 
+    /**
+     * Initialises object streams for connection, hands the message to the relevant function to handle it
+     * 
+     * @param socket the socket forming the connection
+     * @throws Exception
+     */
     public void handleConnection(Socket socket) throws Exception {
         
         inObj = new ObjectInputStream(socket.getInputStream());
@@ -102,6 +126,11 @@ public class Node extends Thread {
     
     }
 
+    /**
+     * Prints the message if the right variables are set
+     * 
+     * @param message the message to be printed
+     */
     public void printMessage(Message message) {
 
         synchronized(lock) {
@@ -126,6 +155,14 @@ public class Node extends Thread {
         }
     }
 
+    /**
+     * Handles a prepare message
+     * Will send a promise if the proposal number is higher than any promised proposal numbers
+     * Sends a Nack otherwise
+     * 
+     * @param message the prepare message
+     * @throws Exception
+     */
     public void handlePrepare(Prepare message) throws Exception {
 
         int proposalNumber = message.proposalNumber;
@@ -139,6 +176,13 @@ public class Node extends Thread {
         
     }
 
+    /**
+     * Sends a promise back to the proposer
+     * 
+     * @param proposalNumber the proposal number of the prepare message
+     * @param targetID the id of the proposer to send the promise to
+     * @throws Exception
+     */
     public void sendPromise(int proposalNumber, int targetID) throws Exception {
 
         Promise promise = new Promise(proposalNumber, this.acceptedProposal, this.acceptedValue, this.nodeID, targetID);
@@ -152,6 +196,14 @@ public class Node extends Thread {
 
     }
 
+    /**
+     * Handles a promise message from an acceptor
+     * Sets the relevant variables of the proposer
+     * If the proposer recieves a promise with a proposal number not equal to -1, it knows it can set its proposal value
+     * 
+     * @param message the promise messgae
+     * @throws Exception
+     */
     public void handlePromise(Promise message) throws Exception {
 
         int toId = message.to;
@@ -186,6 +238,15 @@ public class Node extends Thread {
 
     }
 
+
+    /**
+     * Handles the accept message from a proposer
+     * If the acceptor has not already promised to a higher proposal number, it will send an Accepted message
+     * If not, it sends a Nack
+     * 
+     * @param accept the accept message
+     * @throws Exception
+     */
     public void handleAccept(Accept accept) throws Exception {
         
         int recievedFrom = accept.from;
@@ -200,6 +261,14 @@ public class Node extends Thread {
         
     }
 
+    /**
+     * Sends an Accepted message to the proposer
+     * 
+     * @param targetID the id of the proposer
+     * @param proposalNumber proposal number that has been accepted
+     * @param proposalValue proposal value that has been accepted
+     * @throws Exception
+     */
     public void sendAccepted(int targetID, int proposalNumber, int proposalValue) throws Exception {
 
         Accepted accepted = new Accepted(proposalNumber, proposalValue, this.nodeID, targetID);
@@ -211,6 +280,13 @@ public class Node extends Thread {
         socket.close();
     }
 
+    /**
+     * Sends a Nack to the proposer
+     * 
+     * @param targetID the id of the proposer
+     * @param proposalNumber the proposer number that is being Nacked
+     * @throws Exception
+     */
     public void sendNack(int targetID, int proposalNumber) throws Exception {
 
         Nack nack = new Nack(proposalNumber, this.nodeID, targetID);
@@ -223,6 +299,12 @@ public class Node extends Thread {
 
     }
 
+    /**
+     * Handles an Accepted message received from an acceptor
+     * Increases the numAccepted member variable of the proposer and counts down the latch
+     * 
+     * @param accept the Accepted message
+     */
     public void handleAccepted(Accepted accept) {
         int toId = accept.to;
         if(toId == p1.nodeID) {
@@ -234,6 +316,12 @@ public class Node extends Thread {
         }
     }
 
+    /**
+     * Handles a Nack message received from an acceptor
+     * Increases the NACKed member variable of the relevant proposer
+     * 
+     * @param nack The nack message
+     */
     public void handleNack(Nack nack) {
         int toId = nack.to;
         if(toId == p1.nodeID) {
@@ -243,6 +331,11 @@ public class Node extends Thread {
         }
     }
 
+    /**
+     * Starts up the Proposer and Acceptor nodes
+     * 
+     * @param args Unused
+     */
     public static void main(String args[]) {
         try {
 

@@ -12,7 +12,6 @@ public class RoundStats {
     public LocalTime timestampStart;
     public LocalTime timestampEnd;
 
-    // ADD TIME STAMP TO STATS FOR TESTING
     public void saveStats(int nodeID, int round, int proposalNumber, int numAccepted, int numNACKed, int receivedPromises, int proposalValue, LocalTime timestampStart, LocalTime timestampEnd) {
         this.nodeID = nodeID;
         this.round = round;

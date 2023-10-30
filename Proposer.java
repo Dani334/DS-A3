@@ -1,11 +1,9 @@
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Vector;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.Date;
 
 public class Proposer extends Node {
 
@@ -34,14 +32,25 @@ public class Proposer extends Node {
 
     private Boolean STAT = false;
     
+    /**
+     * Calls the constructor of the super-class Node, initialises proposlal number, and latches
+     * 
+     * @param nodeID the id of the proposer
+     * @param proposalNumber the initial propsoal number to propose
+     * @throws Exception
+     */
     public Proposer(int nodeID, int proposalNumber) throws Exception {
-        super(nodeID, proposalNumber);
+        super(nodeID);
         lastProposalNumber = proposalNumber;
         latchPromise = new CountDownLatch(4);
         latchAccept = new CountDownLatch(4);
         latchReply = new CountDownLatch(8);
     }
 
+    /**
+     * Creates a thread instance and starts Phase1 of Paxos
+     * 
+     */
     @Override
     public void run() {
         try {
@@ -51,6 +60,11 @@ public class Proposer extends Node {
         }
     }
 
+    /**
+     * Called on a failed round, resets member variables and starts phase 1 again
+     * 
+     * @throws Exception
+     */
     public void restartPhase1() throws Exception {
         round++;
         latchPromise = new CountDownLatch(4);
@@ -65,6 +79,15 @@ public class Proposer extends Node {
         Phase1(lastProposalNumber);
     }
 
+    /**
+     * This method initialises Phase 1 of the paxos protocol
+     * It will send prepare messages out to all nodes (including the other proposer), then it will wait until it recieves 8 replies
+     * or until it times out.
+     * It will then begin phase 2
+     * 
+     * @param proposalNumber the proposal number of the proposal
+     * @throws Exception
+     */
     public void Phase1(int proposalNumber) throws Exception {
 
         this.lastProposalNumber = proposalNumber;
@@ -88,6 +111,16 @@ public class Proposer extends Node {
         Phase2(proposalNumber);
     }
 
+    /**
+     * This method begins phase 2 of the paxos protocol
+     * It will check to see how many promises it received and if it is less than 4, restart phas 1.
+     * If it receives a majority of promises (>4), it will send an accept message to those that sent the promises
+     * It will then await accepted messages and in the case where we recieve 4, we set the accepted proposal number and value
+     * It will restart phase 1 in the case of receiving <4 accepted messages
+     * 
+     * @param proposalNumber
+     * @throws Exception
+     */
     public void Phase2(int proposalNumber) throws Exception {
 
         if(this.receivedPromises < 4) {
@@ -111,12 +144,6 @@ public class Proposer extends Node {
                 this.sendAccept(acceptorIds.elementAt(i), proposalNumber, proposalValue);
             }
 
-            // if(NACKed + receivedPromises >= 8) {
-            //     for(int i = 0; i < latchAccept.getCount(); i++) {
-            //         latchAccept.getCount();
-            //     }
-            // }
-
             this.latchAccept.await(2000, TimeUnit.MILLISECONDS);
             this.timestampEnd = LocalTime.now();
             
@@ -130,7 +157,7 @@ public class Proposer extends Node {
             if(this.numAccepted < 4) {
                 restartPhase1();
             } else {
-                // Do we have to send the accepted value?
+                
                 this.acceptedProposal = proposalNumber;
                 this.acceptedValue = proposalValue;
                 
@@ -141,6 +168,13 @@ public class Proposer extends Node {
 
     }
 
+    /**
+     * Sends the prepare message to a given node
+     * 
+     * @param targetID id of the node to send the prepare
+     * @param proposalNumber proposal number of the prepare message
+     * @throws Exception
+     */
     public void sendPrepare(int targetID, int proposalNumber) throws Exception {
 
         Message prepare = new Prepare(proposalNumber, this.nodeID, targetID);
@@ -152,6 +186,14 @@ public class Proposer extends Node {
 
     }
 
+    /**
+     * Sends an accept message to a given node
+     * 
+     * @param targetID id of the node to send the accept message
+     * @param proposalNumber propsoal number of the promised proposal
+     * @param proposalValue proposal value of the proposal
+     * @throws Exception
+     */
     public void sendAccept(int targetID, int proposalNumber, int proposalValue) throws Exception {
 
         Accept accept = new Accept(proposalNumber, proposalValue, this.nodeID, targetID);
