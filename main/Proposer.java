@@ -1,9 +1,16 @@
+package main;
+
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.time.LocalTime;
 import java.util.Vector;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+
+import Message.Accept;
+import Message.Message;
+import Message.Prepare;
+import helper.RoundStats;
 
 public class Proposer extends Node {
 
@@ -100,7 +107,8 @@ public class Proposer extends Node {
         
         this.lastProposalNumber++;
 
-        latchReply.await(10000, TimeUnit.MILLISECONDS);
+        // do not want to wait 25 seconds for all replies as we may have received 4 promises already!
+        latchReply.await(25000, TimeUnit.MILLISECONDS);
         if(receivedReplies >= 8) {
             long countDown = latchPromise.getCount();
             for(int i = 0; i < countDown; i++) {

@@ -18,7 +18,7 @@ All used to create the messages used in communication
 
 AND
 
-RoundStats.java
+- RoundStats.java
 
 To save the stats of each round of each proposer used for analysis.
 

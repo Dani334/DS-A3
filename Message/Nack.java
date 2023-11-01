@@ -1,6 +1,7 @@
+package Message;
 public class Nack extends Message {
 
-    Nack(int proposalNumber, int from, int to) {
+    public Nack(int proposalNumber, int from, int to) {
         this.name = "Nack";
         this.proposalNumber = proposalNumber;
         this.from = from;

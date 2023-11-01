@@ -1,17 +1,26 @@
+package main;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.*;
 import java.util.*;
 
+import Message.Accept;
+import Message.Accepted;
+import Message.Message;
+import Message.Nack;
+import Message.Prepare;
+import Message.Promise;
+
 public class Node extends Thread {
     
-    protected int nodeID;
+    public int nodeID;
 
     protected int highestPromisedProposal;
     
     protected int acceptedProposal = -1;
-    protected int acceptedValue = -1;
+    public int acceptedValue = -1;
 
     private ServerSocket serverSocket;
     
@@ -25,11 +34,11 @@ public class Node extends Thread {
 
     private static final Object lock = new Object();
 
-    private Boolean PREPARE = false;
-    private Boolean PROMISE = false;
-    private Boolean ACCEPT = false;
-    private Boolean ACCEPTED = false;
-    private Boolean NACK = false;
+    private Boolean PREPARE = true;
+    private Boolean PROMISE = true;
+    private Boolean ACCEPT = true;
+    private Boolean ACCEPTED = true;
+    private Boolean NACK = true;
 
     /**
      * This constructor is used by the proposer sub-class and initialises node id
@@ -92,6 +101,38 @@ public class Node extends Thread {
         
         inObj = new ObjectInputStream(socket.getInputStream());
         outObj = new ObjectOutputStream(socket.getOutputStream());
+
+        if(delayed) {
+            Random rand = new Random();
+
+            // Member 2 has 30% chance for instant reply, their delay is 20 seconds if no instant reply
+            if(nodeID == 2 && rand.nextDouble() > 0.3) {
+                Thread.sleep(200000);
+            }
+
+            // if(nodeID == 3) {
+            //     // Member 3 has a 10% of dropping a message
+            //     if(rand.nextDouble() > 0.9) {
+            //         inObj.readObject();
+            //         return;
+            //     } 
+            //     // If they do not drop the message, 10 second response delay
+            //     else {
+            //         Thread.sleep(10000);
+            //     }
+            // }
+
+            // if(nodeID > 3) {
+            //     // Members 4-9 will have a random delay between 0-7 seconds
+            //     int milliDelay = rand.nextInt(1000);
+            //     Thread.sleep(milliDelay);
+            // }
+
+
+        }
+
+
+        
 
         if(this.nodeID == p1.nodeID) {
             p1.latchReply.countDown();
@@ -364,7 +405,7 @@ public class Node extends Thread {
 
             Node[] nodes =  new Node[9];
             for(int i = 1; i <= 9; i++) {
-                nodes[i-1] = new Node(i, proposer1, proposer2, false);
+                nodes[i-1] = new Node(i, proposer1, proposer2, true);
                 nodes[i-1].start();
             }
 

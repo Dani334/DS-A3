@@ -1,20 +1,13 @@
-JFLAGS = -g -cp lib/*.jar Message.java Prepare.java Promise.java Accept.java Accepted.java Nack.java Proposer.java Node.java RoundStats.java
+JFLAGS = -g -cp lib/*.jar Message/Message.java Message/Prepare.java Message/Promise.java Message/Accept.java Message/Accepted.java Message/Nack.java main/Proposer.java main/Node.java helper/RoundStats.java
 JC = javac
 .SUFFIXES: .java .class
 .java.class:
 	$(JC) $(JFLAGS) $*.java
 CLASSES = \
-		Node.java \
-		Proposer.java \
-		RoundStats.java \
-		Message.java \
-		Prepare.java \
-		Promise.java \
-		Accept.java \
-		Accepted.java \
-		Nack.java \
-		testCase_immediateReplies.java \
-		testCase_delayedReplies.java
+		main/Node.java \
+		main/Proposer.java \
+		testCases/testCase_immediateReplies.java \
+		testCases/testCase_delayedReplies.java
  
 default: classes
 
@@ -22,3 +15,7 @@ classes: $(CLASSES:.java=.class)
 
 clean:
 	$(RM) *.class
+	$(RM) Message/*.class
+	$(RM) main/*.class
+	$(RM) helper/*.class
+	$(RM) testCases/*.class
