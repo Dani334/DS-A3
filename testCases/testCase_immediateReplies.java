@@ -8,6 +8,8 @@ import main.Proposer;
 
 
 public class testCase_immediateReplies {
+    public int startPort = 6000;
+
     static boolean STAT = false;
     
     public Proposer proposer1;
@@ -34,7 +36,7 @@ public class testCase_immediateReplies {
 
         nodes =  new Node[9];
         for(int i = 1; i <= 9; i++) {
-            nodes[i-1] = new Node(i, proposer1, proposer2, false, 6000);
+            nodes[i-1] = new Node(i, proposer1, proposer2, false);
             nodes[i-1].start();
         }
 
@@ -63,7 +65,7 @@ public class testCase_immediateReplies {
 
         nodes =  new Node[9];
         for(int i = 1; i <= 9; i++) {
-            nodes[i-1] = new Node(i, proposer1, proposer2, false, 6000);
+            nodes[i-1] = new Node(i, proposer1, proposer2, false);
             nodes[i-1].start();
         }
 
@@ -89,7 +91,7 @@ public class testCase_immediateReplies {
 
         nodes =  new Node[9];
         for(int i = 1; i <= 9; i++) {
-            nodes[i-1] = new Node(i, proposer1, null, false, 6000);
+            nodes[i-1] = new Node(i, proposer1, null, false);
             nodes[i-1].start();
         }
 

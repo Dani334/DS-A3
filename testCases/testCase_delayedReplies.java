@@ -8,6 +8,9 @@ import main.Proposer;
 
 
 public class testCase_delayedReplies {
+
+    public int startPort = 6000;
+
     static boolean STAT = true;
     
     public Proposer proposer1;
@@ -34,7 +37,7 @@ public class testCase_delayedReplies {
 
         nodes =  new Node[9];
         for(int i = 1; i <= 9; i++) {
-            nodes[i-1] = new Node(i, proposer1, proposer2, true, 6000);
+            nodes[i-1] = new Node(i, proposer1, proposer2, true);
             nodes[i-1].start();
         }
 
@@ -63,7 +66,7 @@ public class testCase_delayedReplies {
 
         nodes =  new Node[9];
         for(int i = 1; i <= 9; i++) {
-            nodes[i-1] = new Node(i, proposer1, proposer2, true, 6000);
+            nodes[i-1] = new Node(i, proposer1, proposer2, true);
             nodes[i-1].start();
         }
 
@@ -89,7 +92,7 @@ public class testCase_delayedReplies {
 
         nodes =  new Node[9];
         for(int i = 1; i <= 9; i++) {
-            nodes[i-1] = new Node(i, proposer1, null, true, 6000);
+            nodes[i-1] = new Node(i, proposer1, null, true);
             nodes[i-1].start();
         }
 

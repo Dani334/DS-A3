@@ -7,16 +7,15 @@ import java.util.Vector;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import Message.Accept;
-import Message.Message;
-import Message.Prepare;
-import Message.Response;
+import Message.*;
 import helper.RoundStats;
 
 public class Proposer extends Node {
 
+    public static int startPort = 6000;
+
     private int round = 1;
-    private int lastProposalNumber;
+    public int lastProposalNumber;
     public int receivedPromises = 0;
     public int receivedReplies = 0;
 
@@ -49,7 +48,7 @@ public class Proposer extends Node {
      * @throws Exception
      */
     public Proposer(int nodeID, int proposalNumber) throws Exception {
-        super(nodeID, 6000);
+        super(nodeID, startPort);
         lastProposalNumber = proposalNumber;
         latchPromise = new CountDownLatch(4);
         latchAccept = new CountDownLatch(4);

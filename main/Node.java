@@ -1,4 +1,5 @@
 package main;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -7,31 +8,26 @@ import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
-import Message.Accept;
-import Message.Accepted;
-import Message.Message;
-import Message.Nack;
-import Message.Prepare;
-import Message.Promise;
-import Message.Response;
+import Message.*;
+
 
 public class Node extends Thread {
 
-    public int startPort;
+    public int startPort = 6000;
     
     public int nodeID;
 
-    protected int highestPromisedProposal;
+    public int highestPromisedProposal;
     
-    protected int acceptedProposal = -1;
+    public int acceptedProposal = -1;
     public int acceptedValue = -1;
 
     public Queue<Message> messageQueue;
 
     private ServerSocket serverSocket;
     
-    protected ObjectInputStream inObj;
-    protected ObjectOutputStream outObj;
+    public ObjectInputStream inObj;
+    public ObjectOutputStream outObj;
 
     private Proposer p1;
     private Proposer p2;
@@ -54,7 +50,7 @@ public class Node extends Thread {
      * @throws Exception
      */
     public Node(int nodeID, int startPort) throws Exception {
-        this.startPort = startPort;
+        
         this.nodeID = nodeID;
         messageQueue = new LinkedList<>();
         delayed = false;
@@ -68,9 +64,8 @@ public class Node extends Thread {
      * @param p2 Proposer 2
      * @throws IOException
      */
-    public Node(int nodeID, Proposer p1, Proposer p2, boolean delayed, int startPort) throws IOException {
+    public Node(int nodeID, Proposer p1, Proposer p2, boolean delayed) throws IOException {
         
-        this.startPort = startPort;
         this.delayed = delayed;
         this.p1 = p1;
         this.p2 = p2;
@@ -110,6 +105,7 @@ public class Node extends Thread {
      * @throws Exception
      */
     public void handleConnection(Socket socket) throws Exception {
+        
         inObj = new ObjectInputStream(socket.getInputStream());
         outObj = new ObjectOutputStream(socket.getOutputStream());
         Message message = (Message) inObj.readObject();
@@ -117,7 +113,7 @@ public class Node extends Thread {
         messageQueue.add(message);
 
         
-        if(this.nodeID == p1.nodeID) {
+        if(p1 != null && this.nodeID == p1.nodeID) {
             p1.latchReply.countDown();
             p1.receivedReplies++;
         } else if(p2 != null && this.nodeID == p2.nodeID) {
@@ -143,6 +139,7 @@ public class Node extends Thread {
         boolean M3_notDropped = true;
         int M4_9Delay = new Random().nextInt(2500) + 1;
 
+        
         while(!messageQueue.isEmpty()) {
             
             boolean canReply = false;
@@ -179,6 +176,7 @@ public class Node extends Thread {
     
             } else canReply = true;
 
+            
             if(canReply) {
                 Message message = messageQueue.poll();
                 if(message.name.equals("Prepare")) {
@@ -303,7 +301,7 @@ public class Node extends Thread {
     public void handlePromise(Promise message) throws Exception {
 
         int toId = message.to;
-        if(toId == p1.nodeID) {
+        if(p1 != null && toId == p1.nodeID) {
             p1.latchPromise.countDown();
             p1.acceptorIds.add(message.from);
             p1.receivedPromises++;
@@ -312,9 +310,8 @@ public class Node extends Thread {
             p2.acceptorIds.add(message.from);
             p2.receivedPromises++;
         }
-
         int acceptorsProposal = message.acceptedProposal;
-
+        
         if(acceptorsProposal == -1) {
             if(toId == p1.nodeID) {
                 p1.numNotAccepted++;
@@ -323,7 +320,7 @@ public class Node extends Thread {
             }
         } else {
 
-            if(acceptorsProposal > p1.previousHighestProposalNumber && toId == p1.nodeID) {
+            if(p1 != null && acceptorsProposal > p1.previousHighestProposalNumber && toId == p1.nodeID) {
                 p1.previousHighestProposalNumber = acceptorsProposal;
                 p1.previousHighestProposalValue = message.acceptedValue;
             } else if(p2 != null && acceptorsProposal > p2.previousHighestProposalNumber && toId == p2.nodeID) {
@@ -403,7 +400,7 @@ public class Node extends Thread {
      */
     public void handleAccepted(Accepted accept) {
         int toId = accept.to;
-        if(toId == p1.nodeID) {
+        if(p1 != null && toId == p1.nodeID) {
             p1.numAccepted++;
             p1.latchAccept.countDown();
         } else if(p2 != null && toId == p2.nodeID) {
@@ -420,7 +417,7 @@ public class Node extends Thread {
      */
     public void handleNack(Nack nack) {
         int toId = nack.to;
-        if(toId == p1.nodeID) {
+        if(p1 != null && toId == p1.nodeID) {
             p1.latchNack.countDown();
             p1.NACKed++;
         } else if(p2 != null && toId == p2.nodeID) {
@@ -432,6 +429,15 @@ public class Node extends Thread {
     public void handleResponse(Response response) {
         this.acceptedProposal = response.proposalNumber;
         this.acceptedValue = response.proposalValue;
+        int toId = response.to;
+        if(p1 != null && toId == p1.nodeID) {
+            p1.acceptedProposal = response.proposalNumber;
+            p1.acceptedValue = response.proposalValue;
+        } else if(p2 != null && toId == p2.nodeID) {
+            p2.acceptedProposal = response.proposalNumber;
+            p2.acceptedValue = response.proposalValue;
+        }
+    
     }
 
     /**
@@ -462,7 +468,7 @@ public class Node extends Thread {
 
             Node[] nodes =  new Node[9];
             for(int i = 1; i <= 9; i++) {
-                nodes[i-1] = new Node(i, proposer1, proposer2, true, 6000);
+                nodes[i-1] = new Node(i, proposer1, proposer2, true);
                 nodes[i-1].start();
             }
 

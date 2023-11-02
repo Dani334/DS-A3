@@ -7,7 +7,8 @@ CLASSES = \
 		main/Node.java \
 		main/Proposer.java \
 		testCases/testCase_immediateReplies.java \
-		testCases/testCase_delayedReplies.java
+		testCases/testCase_delayedReplies.java \
+		testCases/testCase_unitTests.java
  
 default: classes
 
