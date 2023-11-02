@@ -205,7 +205,7 @@ public class Proposer extends Node {
             ready = latchReply.await(0, TimeUnit.MILLISECONDS) || latchPromise.await(0, TimeUnit.MILLISECONDS);
             LocalTime timeWhile = LocalTime.now();
             
-            if(timeNow.until(timeWhile, ChronoUnit.MILLIS) > 4000) {
+            if(timeNow.until(timeWhile, ChronoUnit.MILLIS) > 25000) {
                 return false;
             }
         }
@@ -228,7 +228,7 @@ public class Proposer extends Node {
         while(!ready) {
             ready = latchAccept.await(0, TimeUnit.MILLISECONDS) || latchNack.await(0, TimeUnit.MILLISECONDS);
             LocalTime timeWhile = LocalTime.now();
-            if(timeNow.until(timeWhile, ChronoUnit.MILLIS) > 15000) {
+            if(timeNow.until(timeWhile, ChronoUnit.MILLIS) > 25000) {
                 
                 return false;
             }

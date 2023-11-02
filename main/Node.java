@@ -37,11 +37,11 @@ public class Node extends Thread {
 
     private static final Object lock = new Object();
 
-    private Boolean PREPARE = false;
-    private Boolean PROMISE = false;
-    private Boolean ACCEPT = false;
-    private Boolean ACCEPTED = false;
-    private Boolean NACK = false;
+    private Boolean PREPARE = true;
+    private Boolean PROMISE = true;
+    private Boolean ACCEPT = true;
+    private Boolean ACCEPTED = true;
+    private Boolean NACK = true;
 
     /**
      * This constructor is used by the proposer sub-class and initialises node id
@@ -126,6 +126,11 @@ public class Node extends Thread {
 
     public void reply() throws Exception {
 
+        double M2_delay_chance = new Random().nextDouble();
+        double M3_delay_chance = new Random().nextDouble();
+        boolean M3_notDropped = true;
+        int M4_9Delay = new Random().nextInt(5000) + 1;
+
         while(!messageQueue.isEmpty()) {
             
             boolean canReply = false;
@@ -134,23 +139,26 @@ public class Node extends Thread {
                 Random rand = new Random();
                 LocalTime time = LocalTime.now();
 
-                if(nodeID == 2 && rand.nextDouble() > 0.3) {
-                    // member 3 has a 30% chance of an instant reply, 20 second delay otherwise
-                    if(messageQueue.peek().time.until(time, ChronoUnit.MILLIS) > 6000) {
+                if(nodeID == 1) canReply = true;
+
+                else if(nodeID == 2 && M2_delay_chance > 0.3) {
+                    // member 3 has a 30% chance of an instant reply, 15 second delay otherwise
+                    if(messageQueue.peek().time.until(time, ChronoUnit.MILLIS) > 15000) {
                         canReply = true;
                     }
     
                 } else if(nodeID == 3) {
                     // member 3 has a 10% chance of dropping a message, else it has a 10 second response delay
-                    if(rand.nextDouble() > 0.9) {
+                    if(M3_delay_chance > 0.9 && M3_notDropped) {
+                        M3_notDropped = false;
                         messageQueue.poll();
                     } else if(messageQueue.peek().time.until(time, ChronoUnit.MILLIS) > 10000) {
                         canReply = true;
                     }
                 } else if(nodeID > 3) {
-                    // members 4-9 have a random interval between 1 millisecond and 7000 milliseconds to reply
-                    int randNum = rand.nextInt(7000) + 1;
-                    if(messageQueue.peek().time.until(time, ChronoUnit.MILLIS) > randNum) {
+                    // members 4-9 have a random interval between 1 millisecond and 5000 milliseconds to reply
+                    
+                    if(messageQueue.peek().time.until(time, ChronoUnit.MILLIS) > M4_9Delay) {
                         canReply = true;
                     }
                 }
@@ -423,17 +431,20 @@ public class Node extends Thread {
             int p2 = p1;
             while(p1 == p2) p2 = rand.nextInt(3) + 1;
             
-            Proposer proposer1 = new Proposer(p1, 1);
+            Proposer proposer1 = new Proposer(3, 1);
             Proposer proposer2 = new Proposer(p2, 1);
 
             Node[] nodes =  new Node[9];
             for(int i = 1; i <= 9; i++) {
-                nodes[i-1] = new Node(i, proposer1, proposer2, false);
+                nodes[i-1] = new Node(i, proposer1, proposer2, true);
                 nodes[i-1].start();
             }
 
             proposer1.start();
-            proposer2.start();
+            // proposer2.start();
+
+            proposer1.join();
+            System.out.println("Consensus reached");
             
 
         } catch (Exception e) {
