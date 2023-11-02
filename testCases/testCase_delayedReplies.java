@@ -175,7 +175,6 @@ public class testCase_delayedReplies {
                 testCase_delayedReplies[] test1 = new testCase_delayedReplies[test1Cases];
                 int passed1 = 0;
                 for(int i = 0; i < test1Cases; i++) {
-                    System.out.println("Test: " + i);
                     test1[i] = new testCase_delayedReplies();
                     test1[i].startUp();
                     int id = test1[i].electedID();

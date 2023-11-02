@@ -34,14 +34,12 @@ public class Node extends Thread {
 
     public boolean delayed;
 
-    private static final Object lock = new Object();
-
-    private Boolean PREPARE = false;
-    private Boolean PROMISE = false;
-    private Boolean ACCEPT = false;
-    private Boolean ACCEPTED = false;
-    private Boolean NACK = false;
-    private Boolean RESPONSE = false;
+    private Boolean PREPARE = true;
+    private Boolean PROMISE = true;
+    private Boolean ACCEPT = true;
+    private Boolean ACCEPTED = true;
+    private Boolean NACK = true;
+    private Boolean RESPONSE = true;
 
     /**
      * This constructor is used by the proposer sub-class and initialises node id
@@ -180,73 +178,37 @@ public class Node extends Thread {
             if(canReply) {
                 Message message = messageQueue.poll();
                 if(message.name.equals("Prepare")) {
-                    if(PREPARE) printMessage(message);
+                    if(PREPARE) message.printMessage();
                     handlePrepare((Prepare) message);
                 }
                 else if(message.name.equals("Promise")) {
                     Promise promise = (Promise) message;
-                    if(PROMISE) printMessage(promise);
+                    if(PROMISE) promise.printMessage();
                     handlePromise(promise);
                     
                 }
                 else if(message.name.equals("Accept")) {
                     Accept accept = (Accept) message;
-                    if(ACCEPT) printMessage(accept);
+                    if(ACCEPT) accept.printMessage();
                     handleAccept(accept);
                 }
                 else if(message.name.equals("Accepted")) {
                     Accepted accepted = (Accepted) message;
-                    if(ACCEPTED) printMessage(accepted);
+                    if(ACCEPTED) accepted.printMessage();
                     handleAccepted(accepted);
                 } else if(message.name.equals("Nack")) {
                     Nack nack = (Nack) message;
-                    if(NACK) printMessage(nack);
+                    if(NACK) nack.printMessage();
                     handleNack(nack);
                 } else if(message.name.equals("Response")) {
                     Response response = (Response) message;
-                    if(RESPONSE) printMessage(response);
+                    if(RESPONSE) response.printMessage();
                     handleResponse(response);
                 }
             }
 
         }
 
-
-
-
-    }
-
-    /**
-     * Prints the message if the right variables are set
-     * 
-     * @param message the message to be printed
-     */
-    public void printMessage(Message message) {
-
-        synchronized(lock) {
-            System.out.println(message.name);
-            System.out.println("From id: " + message.from);
-            System.out.println("To id: " + message.to);
-            System.out.println("Proposal Number: " + message.proposalNumber);
-            
-            if(message.name.equals("Promise")) {
-                Promise promise = (Promise) message;
-                System.out.println("Accepted Proposal Number: " + promise.acceptedProposal);
-                System.out.println("Accepted Proposal Value: " + promise.acceptedValue);
-            } else if(message.name.equals("Accept")) {
-                Accept accept = (Accept) message;
-                System.out.println("Proposal Value: " + accept.proposalValue);
-            } else if(message.name.equals("Accepted")) {
-                Accepted accepted = (Accepted) message;
-                System.out.println("Proposal Value: " + accepted.proposalValue);
-            } else if(message.name.equals("Response")) {
-                Response response = (Response) message;
-                System.out.println("Proposal Value: " + response.proposalValue);
-            }
-            System.out.println("Time sent: " + message.time);
-            System.out.println();
-
-        }
     }
 
     /**
@@ -478,11 +440,6 @@ public class Node extends Thread {
             proposer1.join();
             // proposer2.join();
             System.out.println("Consensus reached");
-            for(Node node : nodes) {
-                System.out.println("node: " + node.nodeID);
-                System.out.println("prop num: " + node.acceptedProposal);
-                System.out.println("prop val: " + node.acceptedValue);
-            }
             
 
         } catch (Exception e) {

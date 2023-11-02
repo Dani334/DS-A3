@@ -9,10 +9,10 @@ The protocol starts by randomly creating two proposers between 1-3. It then star
 
 The way I have simulated delays and dropping of messages is by using a message queue and timestamps on each message. Each message is receieved instantly but if the delayed boolean is set then it will randomise either the chance it replies instantly, the chance is drops the message or the time before replying to the message. The profiles were set up as follows:
 
-Member 1: reply instantly to everything no matter what
-Member 2: has a 30% chance to reply instantly to messages otherwise has a 7.5 second delay
-Member 3: has a 10% chance to drop a message. Also has a 100% chance for a 5 second delay if no messages dropped
-Members 4-9: have a randomised interval between 0 and 2.5 delay
+- Member 1: reply instantly to everything no matter what
+- Member 2: has a 30% chance to reply instantly to messages otherwise has a 7.5 second delay
+- Member 3: has a 10% chance to drop a message. Also has a 100% chance for a 5 second delay if no messages dropped
+- Members 4-9: have a randomised interval between 0 and 2.5 seconds delay
 
 ### Helper classes
 
@@ -24,6 +24,7 @@ There are some extra classes in use in Message/
 - Accept.java
 - Accepted.java
 - Nack.java
+- Response
 
 All used to create the messages used in communication
 
@@ -32,6 +33,26 @@ AND in helper/
 - RoundStats.java
 
 To save the stats of each round of each proposer used for analysis.
+
+### Directory Structure
+
+├── helper
+│   ├── roundStats.java
+├── main
+│   ├── Node.java
+│   ├── Proposer.java
+├── Message
+│   ├── Accept.java
+│   ├── Accepted.java
+|   |-- Message.java
+|   |-- Nack.java
+|   |-- Prepare.java
+|   |-- Promise.java
+|   |-- Response.java
+├── testCases
+|   |-- testCase_delayedReplies.java
+|   |-- testCase_immediateReplies.java
+|   |-- testCase_unitTests.java
 
 ## Testing
 
@@ -52,7 +73,7 @@ kill -9 <PID>
 
 ```
 
-On any processes that show up. If you cannot kill any of these processes, please change `public int startPort = 6000;` to start from anything other than 6000 with enough room for the next 9 ports available. This must be changed in the following files:
+On any processes if they show up. If none show up, no need to kill and processes. If you cannot kill any of these processes, please change `public int startPort = 6000;` to start from anything other than 6000 with enough room for the next 9 ports available. This must be changed in the following files:
 
 - Node.java
 - Proposer.java
@@ -69,5 +90,6 @@ java testCases/testCase_delayedReplies
 java testCases/testCase_unitTests
 
 ```
+Please analyse the terminal output for information regarding the passing of test cases.
 
 Please note that the amount of test cases within each major test case can be set, for example in testCase_immediateReplies.java, `int test1Cases = 30;` can be set to equal a higher/lower number if you would like more randomised tests to be run, just ensure you are using `make` again before running `java testCases/testCase_immediateReplies`. You will find that the delayed replies test cases only has a few randomised tests conducted, which is due to some cases taking a long time and was set so that the tests do not take long to finish. 

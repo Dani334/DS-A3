@@ -13,4 +13,16 @@ public class Message implements Serializable {
     public Message() {
         time = LocalTime.now();
     }
+
+    /**
+     * Prints the message details
+     */
+    public void printMessage() {
+        System.out.println(this.name);
+        System.out.println("From id: " + this.from);
+        System.out.println("To id: " + this.to);
+        System.out.println("Proposal Number: " + this.proposalNumber);
+        System.out.println("Time sent: " + this.time);
+        System.out.println();
+    }
 }
