@@ -1,9 +1,11 @@
 package testCases;
+
 import java.util.Random;
 
 import helper.RoundStats;
 import main.Node;
 import main.Proposer;
+
 
 public class testCase_immediateReplies {
     static boolean STAT = false;
@@ -182,6 +184,8 @@ public class testCase_immediateReplies {
                 else {
                     test1[i].passed = false;
                 }
+                
+                if(STAT) test1[i].printStats();
                 test1[i].close();
             }
             

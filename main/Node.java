@@ -1,9 +1,10 @@
 package main;
-
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.*;
+import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import Message.Accept;
@@ -22,6 +23,8 @@ public class Node extends Thread {
     protected int acceptedProposal = -1;
     public int acceptedValue = -1;
 
+    public Queue<Message> messageQueue;
+
     private ServerSocket serverSocket;
     
     protected ObjectInputStream inObj;
@@ -34,11 +37,11 @@ public class Node extends Thread {
 
     private static final Object lock = new Object();
 
-    private Boolean PREPARE = true;
-    private Boolean PROMISE = true;
-    private Boolean ACCEPT = true;
-    private Boolean ACCEPTED = true;
-    private Boolean NACK = true;
+    private Boolean PREPARE = false;
+    private Boolean PROMISE = false;
+    private Boolean ACCEPT = false;
+    private Boolean ACCEPTED = false;
+    private Boolean NACK = false;
 
     /**
      * This constructor is used by the proposer sub-class and initialises node id
@@ -48,6 +51,8 @@ public class Node extends Thread {
      */
     public Node(int nodeID) throws Exception {
         this.nodeID = nodeID;
+        messageQueue = new LinkedList<>();
+        delayed = false;
     }
 
     /**
@@ -65,6 +70,7 @@ public class Node extends Thread {
         this.p2 = p2;
         this.nodeID = nodeID;
         highestPromisedProposal = -1;
+        messageQueue = new LinkedList<>();
         try {
             serverSocket = new ServerSocket(6000 + nodeID);
         } catch(Exception e) {
@@ -98,40 +104,13 @@ public class Node extends Thread {
      * @throws Exception
      */
     public void handleConnection(Socket socket) throws Exception {
-        
         inObj = new ObjectInputStream(socket.getInputStream());
         outObj = new ObjectOutputStream(socket.getOutputStream());
         Message message = (Message) inObj.readObject();
+        
+        messageQueue.add(message);
 
-        if(delayed) {
-            Random rand = new Random();
-
-            // Member 2 has 30% chance for instant reply, their delay is 20 seconds if no instant reply
-            if(nodeID == 2 && rand.nextDouble() > 0.3) {
-                Thread.sleep(5000);
-            }
-
-            // if(nodeID == 3) {
-            //     // Member 3 has a 10% of dropping a message
-            //     if(rand.nextDouble() > 0.9) {
-            //         inObj.readObject();
-            //         return;
-            //     } 
-            //     // If they do not drop the message, 10 second response delay
-            //     else {
-            //         Thread.sleep(10000);
-            //     }
-            // }
-
-            // if(nodeID > 3) {
-            //     // Members 4-9 will have a random delay between 0-7 seconds
-            //     int milliDelay = rand.nextInt(1000);
-            //     Thread.sleep(milliDelay);
-            // }
-
-
-        }
-
+        
         if(this.nodeID == p1.nodeID) {
             p1.latchReply.countDown();
             p1.receivedReplies++;
@@ -139,34 +118,78 @@ public class Node extends Thread {
             p2.latchReply.countDown();
             p2.receivedReplies++;
         }
-
         
-        if(message.name.equals("Prepare")) {
-            if(PREPARE) printMessage(message);
-            handlePrepare((Prepare) message);
-        }
-        else if(message.name.equals("Promise")) {
-            Promise promise = (Promise) message;
-            if(PROMISE) printMessage(promise);
-            handlePromise(promise);
-            
-        }
-        else if(message.name.equals("Accept")) {
-            Accept accept = (Accept) message;
-            if(ACCEPT) printMessage(accept);
-            handleAccept(accept);
-        }
-        else if(message.name.equals("Accepted")) {
-            Accepted accepted = (Accepted) message;
-            if(ACCEPTED) printMessage(accepted);
-            handleAccepted(accepted);
-        } else if(message.name.equals("Nack")) {
-            Nack nack = (Nack) message;
-            if(NACK) printMessage(nack);
-            handleNack(nack);
-        }
         
+        reply();  
     
+    }
+
+    public void reply() throws Exception {
+
+        while(!messageQueue.isEmpty()) {
+            
+            boolean canReply = false;
+            if(delayed) {
+                
+                Random rand = new Random();
+                LocalTime time = LocalTime.now();
+
+                if(nodeID == 2 && rand.nextDouble() > 0.3) {
+                    // member 3 has a 30% chance of an instant reply, 20 second delay otherwise
+                    if(messageQueue.peek().time.until(time, ChronoUnit.MILLIS) > 6000) {
+                        canReply = true;
+                    }
+    
+                } else if(nodeID == 3) {
+                    // member 3 has a 10% chance of dropping a message, else it has a 10 second response delay
+                    if(rand.nextDouble() > 0.9) {
+                        messageQueue.poll();
+                    } else if(messageQueue.peek().time.until(time, ChronoUnit.MILLIS) > 10000) {
+                        canReply = true;
+                    }
+                } else if(nodeID > 3) {
+                    // members 4-9 have a random interval between 1 millisecond and 7000 milliseconds to reply
+                    int randNum = rand.nextInt(7000) + 1;
+                    if(messageQueue.peek().time.until(time, ChronoUnit.MILLIS) > randNum) {
+                        canReply = true;
+                    }
+                }
+    
+            } else canReply = true;
+
+            if(canReply) {
+                Message message = messageQueue.poll();
+                if(message.name.equals("Prepare")) {
+                    if(PREPARE) printMessage(message);
+                    handlePrepare((Prepare) message);
+                }
+                else if(message.name.equals("Promise")) {
+                    Promise promise = (Promise) message;
+                    if(PROMISE) printMessage(promise);
+                    handlePromise(promise);
+                    
+                }
+                else if(message.name.equals("Accept")) {
+                    Accept accept = (Accept) message;
+                    if(ACCEPT) printMessage(accept);
+                    handleAccept(accept);
+                }
+                else if(message.name.equals("Accepted")) {
+                    Accepted accepted = (Accepted) message;
+                    if(ACCEPTED) printMessage(accepted);
+                    handleAccepted(accepted);
+                } else if(message.name.equals("Nack")) {
+                    Nack nack = (Nack) message;
+                    if(NACK) printMessage(nack);
+                    handleNack(nack);
+                }
+            }
+
+        }
+
+
+
+
     }
 
     /**
@@ -193,6 +216,7 @@ public class Node extends Thread {
                 Accepted accepted = (Accepted) message;
                 System.out.println("Proposal Value: " + accepted.proposalValue);
             }
+            System.out.println("Time sent: " + message.time);
             System.out.println();
 
         }
@@ -368,8 +392,10 @@ public class Node extends Thread {
     public void handleNack(Nack nack) {
         int toId = nack.to;
         if(toId == p1.nodeID) {
+            p1.latchNack.countDown();
             p1.NACKed++;
         } else if(p2 != null && toId == p2.nodeID) {
+            p2.latchNack.countDown();
             p2.NACKed++;
         }
     }
@@ -402,12 +428,12 @@ public class Node extends Thread {
 
             Node[] nodes =  new Node[9];
             for(int i = 1; i <= 9; i++) {
-                nodes[i-1] = new Node(i, proposer1, proposer2, true);
+                nodes[i-1] = new Node(i, proposer1, proposer2, false);
                 nodes[i-1].start();
             }
 
             proposer1.start();
-            // proposer2.start();
+            proposer2.start();
             
 
         } catch (Exception e) {

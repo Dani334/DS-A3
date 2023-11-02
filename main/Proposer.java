@@ -1,5 +1,4 @@
 package main;
-
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.time.LocalTime;
@@ -34,6 +33,7 @@ public class Proposer extends Node {
     public CountDownLatch latchPromise; 
     public CountDownLatch latchAccept; 
     public CountDownLatch latchReply;
+    public CountDownLatch latchNack;
     private static final Object lock = new Object();
 
     public Vector<Integer> acceptorIds = new Vector<>();
@@ -53,6 +53,7 @@ public class Proposer extends Node {
         latchPromise = new CountDownLatch(4);
         latchAccept = new CountDownLatch(4);
         latchReply = new CountDownLatch(8);
+        latchNack = new CountDownLatch(5);
     }
 
     /**
@@ -109,18 +110,18 @@ public class Proposer extends Node {
         this.lastProposalNumber++;
 
         if(awaitPhase2()) {
-            synchronized(lock) {
-                System.out.println("Moving on to phase 2");
-                System.out.println("Replies: " + this.receivedReplies);
-                System.out.println("Promises: " + this.receivedPromises);
-            }
+            // synchronized(lock) {
+            //     System.out.println("Moving on to phase 2");
+            //     System.out.println("Replies: " + this.receivedReplies);
+            //     System.out.println("Promises: " + this.receivedPromises);
+            // }
 
         } else {
-            synchronized(lock) {
-                System.out.println("failed to receive 8 replies or 4 promises");
-                System.out.println("Replies: " + this.receivedReplies);
-                System.out.println("Promises: " + this.receivedPromises);
-            }
+            // synchronized(lock) {
+            //     System.out.println("failed to receive 8 replies or 4 promises");
+            //     System.out.println("Replies: " + this.receivedReplies);
+            //     System.out.println("Promises: " + this.receivedPromises);
+            // }
         }
 
         if(this.receivedPromises < 4) {
@@ -162,11 +163,11 @@ public class Proposer extends Node {
         }
 
         if(awaitAccepted()) {
-            System.out.println("true returned");
-            System.out.println("Accepteds receieved: " + numAccepted);
+            // System.out.println("true returned");
+            // System.out.println("Accepteds receieved: " + numAccepted);
         } else {
-            System.out.println("false returned");
-            System.out.println("Accepteds receieved: " + numAccepted);
+            // System.out.println("false returned");
+            // System.out.println("Accepteds receieved: " + numAccepted);
         }
         
         this.timestampEnd = LocalTime.now();
@@ -204,7 +205,7 @@ public class Proposer extends Node {
             ready = latchReply.await(0, TimeUnit.MILLISECONDS) || latchPromise.await(0, TimeUnit.MILLISECONDS);
             LocalTime timeWhile = LocalTime.now();
             
-            if(timeNow.until(timeWhile, ChronoUnit.MILLIS) > 30000) {
+            if(timeNow.until(timeWhile, ChronoUnit.MILLIS) > 4000) {
                 return false;
             }
         }
@@ -213,8 +214,8 @@ public class Proposer extends Node {
     }
 
     /**
-     * This method will enter an infinite loop until 4 Accepteds receieved in which it will return true
-     * Or until a timeout occurs (4 Accepteds not reached) in which it will return false
+     * This method will enter an infinite loop until 4 Accepteds or 5 Nacks received receieved in which it will return true
+     * Or until a timeout occurs (4 Accepteds or 5 nacks not reached) in which it will return false
      * 
      * @return ready - true or false depending on if 4 Accpeteds reached after a certain time
      * @throws Exception
@@ -222,13 +223,13 @@ public class Proposer extends Node {
     public boolean awaitAccepted() throws Exception {
 
         LocalTime timeNow = LocalTime.now();
-        System.out.println("TIME NOW: " + timeNow);
+        
         boolean ready = false;
         while(!ready) {
-            ready = latchAccept.await(0, TimeUnit.MILLISECONDS);
+            ready = latchAccept.await(0, TimeUnit.MILLISECONDS) || latchNack.await(0, TimeUnit.MILLISECONDS);
             LocalTime timeWhile = LocalTime.now();
-            if(timeNow.until(timeWhile, ChronoUnit.MILLIS) > 60000) {
-                System.out.println("TIME WHILE: " + timeWhile);
+            if(timeNow.until(timeWhile, ChronoUnit.MILLIS) > 15000) {
+                
                 return false;
             }
         }
