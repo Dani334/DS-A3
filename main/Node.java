@@ -101,13 +101,14 @@ public class Node extends Thread {
         
         inObj = new ObjectInputStream(socket.getInputStream());
         outObj = new ObjectOutputStream(socket.getOutputStream());
+        Message message = (Message) inObj.readObject();
 
         if(delayed) {
             Random rand = new Random();
 
             // Member 2 has 30% chance for instant reply, their delay is 20 seconds if no instant reply
             if(nodeID == 2 && rand.nextDouble() > 0.3) {
-                Thread.sleep(200000);
+                Thread.sleep(5000);
             }
 
             // if(nodeID == 3) {
@@ -131,9 +132,6 @@ public class Node extends Thread {
 
         }
 
-
-        
-
         if(this.nodeID == p1.nodeID) {
             p1.latchReply.countDown();
             p1.receivedReplies++;
@@ -142,8 +140,7 @@ public class Node extends Thread {
             p2.receivedReplies++;
         }
 
-        Message message = (Message) inObj.readObject();
-
+        
         if(message.name.equals("Prepare")) {
             if(PREPARE) printMessage(message);
             handlePrepare((Prepare) message);
@@ -410,7 +407,7 @@ public class Node extends Thread {
             }
 
             proposer1.start();
-            proposer2.start();
+            // proposer2.start();
             
 
         } catch (Exception e) {

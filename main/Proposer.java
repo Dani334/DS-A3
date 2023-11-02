@@ -3,6 +3,7 @@ package main;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Vector;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -107,16 +108,33 @@ public class Proposer extends Node {
         
         this.lastProposalNumber++;
 
-        // do not want to wait 25 seconds for all replies as we may have received 4 promises already!
-        latchReply.await(25000, TimeUnit.MILLISECONDS);
-        if(receivedReplies >= 8) {
-            long countDown = latchPromise.getCount();
-            for(int i = 0; i < countDown; i++) {
-                latchPromise.countDown();
+        if(awaitPhase2()) {
+            synchronized(lock) {
+                System.out.println("Moving on to phase 2");
+                System.out.println("Replies: " + this.receivedReplies);
+                System.out.println("Promises: " + this.receivedPromises);
+            }
+
+        } else {
+            synchronized(lock) {
+                System.out.println("failed to receive 8 replies or 4 promises");
+                System.out.println("Replies: " + this.receivedReplies);
+                System.out.println("Promises: " + this.receivedPromises);
             }
         }
-        latchPromise.await(2000, TimeUnit.MILLISECONDS);
-        Phase2(proposalNumber);
+
+        if(this.receivedPromises < 4) {
+            this.timestampEnd = LocalTime.now();
+            RoundStats stat = new RoundStats();
+            stat.saveStats(nodeID, round, proposalNumber, numAccepted, NACKed, receivedPromises, -1, timestampStart, timestampEnd);
+            stats.add(stat);
+            if(STAT) synchronized(lock) {stat.printStats();}
+            restartPhase1();
+        } else {
+
+            Phase2(proposalNumber);
+        }
+
     }
 
     /**
@@ -131,49 +149,91 @@ public class Proposer extends Node {
      */
     public void Phase2(int proposalNumber) throws Exception {
 
-        if(this.receivedPromises < 4) {
-            this.timestampEnd = LocalTime.now();
-            RoundStats stat = new RoundStats();
-            stat.saveStats(nodeID, round, proposalNumber, numAccepted, NACKed, receivedPromises, -1, timestampStart, timestampEnd);
-            stats.add(stat);
-            if(STAT) synchronized(lock) {stat.printStats();}
-            restartPhase1();
+        int proposalValue = -1;
+        if(numNotAccepted >= 4) {
+            proposalValue = this.nodeID;
         } else {
-
-            int proposalValue = -1;
-            if(numNotAccepted >= 4) {
-                proposalValue = this.nodeID;
-            } else {
-                proposalValue = this.previousHighestProposalValue;
-            }
-            
-            
-            for(int i = 0; i < acceptorIds.size(); i++) {
-                this.sendAccept(acceptorIds.elementAt(i), proposalNumber, proposalValue);
-            }
-
-            this.latchAccept.await(2000, TimeUnit.MILLISECONDS);
-            this.timestampEnd = LocalTime.now();
-            
-            RoundStats stat = new RoundStats();
-            stat.saveStats(nodeID, round, proposalNumber, numAccepted, NACKed, receivedPromises, proposalValue, timestampStart, timestampEnd);
-            stats.add(stat);
-            if(STAT) synchronized(lock) {stat.printStats();}
-
-            // if we received less than 4 Accepted's, it means we do not have a majority, so we reset variables and try again
-            // It could mean that there is already a value accepted or it could mean some messages were dropped.
-            if(this.numAccepted < 4) {
-                restartPhase1();
-            } else {
-                
-                this.acceptedProposal = proposalNumber;
-                this.acceptedValue = proposalValue;
-                
-            }
-
+            proposalValue = this.previousHighestProposalValue;
+        }
+        
+        
+        for(int i = 0; i < acceptorIds.size(); i++) {
+            this.sendAccept(acceptorIds.elementAt(i), proposalNumber, proposalValue);
         }
 
+        if(awaitAccepted()) {
+            System.out.println("true returned");
+            System.out.println("Accepteds receieved: " + numAccepted);
+        } else {
+            System.out.println("false returned");
+            System.out.println("Accepteds receieved: " + numAccepted);
+        }
+        
+        this.timestampEnd = LocalTime.now();
+        
+        RoundStats stat = new RoundStats();
+        stat.saveStats(nodeID, round, proposalNumber, numAccepted, NACKed, receivedPromises, proposalValue, timestampStart, timestampEnd);
+        stats.add(stat);
+        if(STAT) synchronized(lock) {stat.printStats();}
 
+        // if we received less than 4 Accepted's, it means we do not have a majority, so we reset variables and try again
+        // It could mean that there is already a value accepted or it could mean some messages were dropped.
+        if(this.numAccepted < 4) {
+            restartPhase1();
+        } else {
+            
+            this.acceptedProposal = proposalNumber;
+            this.acceptedValue = proposalValue;
+            
+        }
+
+    }
+
+    /**
+     * This method will enter an infinite loop until either 4 Promises or 8 Replies are receieved in which it will return true
+     * Or until a timeout occurs (4 Promises and 8 Replies both not reached) in which it will return false
+     * 
+     * @return ready - true or false depending on if the phase is ready to transition to phase 2
+     * @throws Exception
+     */
+    public boolean awaitPhase2() throws Exception {
+
+        LocalTime timeNow = LocalTime.now();
+        boolean ready = false;
+        while(!ready) {
+            ready = latchReply.await(0, TimeUnit.MILLISECONDS) || latchPromise.await(0, TimeUnit.MILLISECONDS);
+            LocalTime timeWhile = LocalTime.now();
+            
+            if(timeNow.until(timeWhile, ChronoUnit.MILLIS) > 30000) {
+                return false;
+            }
+        }
+
+        return ready;
+    }
+
+    /**
+     * This method will enter an infinite loop until 4 Accepteds receieved in which it will return true
+     * Or until a timeout occurs (4 Accepteds not reached) in which it will return false
+     * 
+     * @return ready - true or false depending on if 4 Accpeteds reached after a certain time
+     * @throws Exception
+     */
+    public boolean awaitAccepted() throws Exception {
+
+        LocalTime timeNow = LocalTime.now();
+        System.out.println("TIME NOW: " + timeNow);
+        boolean ready = false;
+        while(!ready) {
+            ready = latchAccept.await(0, TimeUnit.MILLISECONDS);
+            LocalTime timeWhile = LocalTime.now();
+            if(timeNow.until(timeWhile, ChronoUnit.MILLIS) > 60000) {
+                System.out.println("TIME WHILE: " + timeWhile);
+                return false;
+            }
+        }
+
+        return ready;
     }
 
     /**
