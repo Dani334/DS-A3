@@ -1,4 +1,4 @@
-JFLAGS = -g -cp lib/*.jar Message/Message.java Message/Prepare.java Message/Promise.java Message/Accept.java Message/Accepted.java Message/Nack.java main/Proposer.java main/Node.java helper/RoundStats.java
+JFLAGS = -g -cp lib/*.jar Message/Message.java Message/Prepare.java Message/Promise.java Message/Accept.java Message/Accepted.java Message/Nack.java Message/Response.java main/Proposer.java main/Node.java helper/RoundStats.java
 JC = javac
 .SUFFIXES: .java .class
 .java.class:

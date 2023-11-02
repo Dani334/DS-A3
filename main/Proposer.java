@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 import Message.Accept;
 import Message.Message;
 import Message.Prepare;
+import Message.Response;
 import helper.RoundStats;
 
 public class Proposer extends Node {
@@ -48,7 +49,7 @@ public class Proposer extends Node {
      * @throws Exception
      */
     public Proposer(int nodeID, int proposalNumber) throws Exception {
-        super(nodeID);
+        super(nodeID, 6000);
         lastProposalNumber = proposalNumber;
         latchPromise = new CountDownLatch(4);
         latchAccept = new CountDownLatch(4);
@@ -79,6 +80,7 @@ public class Proposer extends Node {
         latchPromise = new CountDownLatch(4);
         latchAccept = new CountDownLatch(4);
         latchReply = new CountDownLatch(8);
+        latchNack = new CountDownLatch(5);
         this.acceptorIds.clear();
         this.receivedPromises = 0;
         this.numAccepted = 0;
@@ -110,18 +112,24 @@ public class Proposer extends Node {
         this.lastProposalNumber++;
 
         if(awaitPhase2()) {
-            // synchronized(lock) {
-            //     System.out.println("Moving on to phase 2");
-            //     System.out.println("Replies: " + this.receivedReplies);
-            //     System.out.println("Promises: " + this.receivedPromises);
-            // }
+            if(STAT) {
+                synchronized(lock) {
+                    System.out.println(nodeID + " Moving on to phase 2");
+                    System.out.println("Replies: " + this.receivedReplies);
+                    System.out.println("Promises: " + this.receivedPromises);
+                }
+                
+            }
 
         } else {
-            // synchronized(lock) {
-            //     System.out.println("failed to receive 8 replies or 4 promises");
-            //     System.out.println("Replies: " + this.receivedReplies);
-            //     System.out.println("Promises: " + this.receivedPromises);
-            // }
+            if(STAT) {
+                
+                synchronized(lock) {
+                    System.out.println(nodeID + " failed to receive 8 replies or 4 promises");
+                    System.out.println("Replies: " + this.receivedReplies);
+                    System.out.println("Promises: " + this.receivedPromises);
+                }
+            }
         }
 
         if(this.receivedPromises < 4) {
@@ -163,11 +171,17 @@ public class Proposer extends Node {
         }
 
         if(awaitAccepted()) {
-            // System.out.println("true returned");
-            // System.out.println("Accepteds receieved: " + numAccepted);
+            if(STAT) {
+
+                System.out.println(nodeID + "true returned");
+                System.out.println("Accepteds receieved: " + numAccepted);
+            }
         } else {
-            // System.out.println("false returned");
-            // System.out.println("Accepteds receieved: " + numAccepted);
+            if(STAT) {
+                System.out.println(nodeID + "false returned");
+                System.out.println("Accepteds receieved: " + numAccepted);
+
+            }
         }
         
         this.timestampEnd = LocalTime.now();
@@ -185,6 +199,12 @@ public class Proposer extends Node {
             
             this.acceptedProposal = proposalNumber;
             this.acceptedValue = proposalValue;
+            this.highestPromisedProposal = proposalValue;
+            
+            // this node will act as the learner and send the value out to everyone
+            for(int i = 1; i <= 9; i++) {
+                sendResponse(proposalNumber, proposalValue, i);
+            }
             
         }
 
@@ -205,7 +225,7 @@ public class Proposer extends Node {
             ready = latchReply.await(0, TimeUnit.MILLISECONDS) || latchPromise.await(0, TimeUnit.MILLISECONDS);
             LocalTime timeWhile = LocalTime.now();
             
-            if(timeNow.until(timeWhile, ChronoUnit.MILLIS) > 25000) {
+            if(timeNow.until(timeWhile, ChronoUnit.MILLIS) > 10000) {
                 return false;
             }
         }
@@ -228,7 +248,7 @@ public class Proposer extends Node {
         while(!ready) {
             ready = latchAccept.await(0, TimeUnit.MILLISECONDS) || latchNack.await(0, TimeUnit.MILLISECONDS);
             LocalTime timeWhile = LocalTime.now();
-            if(timeNow.until(timeWhile, ChronoUnit.MILLIS) > 25000) {
+            if(timeNow.until(timeWhile, ChronoUnit.MILLIS) > 10000) {
                 
                 return false;
             }
@@ -247,7 +267,7 @@ public class Proposer extends Node {
     public void sendPrepare(int targetID, int proposalNumber) throws Exception {
 
         Message prepare = new Prepare(proposalNumber, this.nodeID, targetID);
-        Socket socket = new Socket("127.0.0.1", 6000 + targetID);
+        Socket socket = new Socket("127.0.0.1", startPort + targetID);
         outObj = new ObjectOutputStream(socket.getOutputStream());
         outObj.writeObject(prepare);
         outObj.flush();
@@ -266,12 +286,22 @@ public class Proposer extends Node {
     public void sendAccept(int targetID, int proposalNumber, int proposalValue) throws Exception {
 
         Accept accept = new Accept(proposalNumber, proposalValue, this.nodeID, targetID);
-        Socket socket = new Socket("127.0.0.1", 6000 + targetID);
+        Socket socket = new Socket("127.0.0.1", startPort + targetID);
         outObj = new ObjectOutputStream(socket.getOutputStream());
         outObj.writeObject(accept);
         outObj.flush();
         socket.close();
         
+    }
+
+    public void sendResponse(int proposalNumber, int proposalValue, int targetID) throws Exception {
+        Response response = new Response(proposalNumber, proposalValue, this.nodeID, targetID);
+        Socket socket = new Socket("127.0.0.1", startPort + targetID);
+        outObj = new ObjectOutputStream(socket.getOutputStream());
+        outObj.writeObject(response);
+        outObj.flush();
+        socket.close();        
+
     }
 
 }

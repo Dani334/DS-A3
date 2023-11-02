@@ -1,0 +1,42 @@
+Prepare
+From id: 3
+To id: 1
+Proposal Number: 1
+Time sent: 15:28:01.690300
+
+Prepare
+From id: 3
+To id: 4
+Proposal Number: 1
+Time sent: 15:28:01.749640
+
+Prepare
+From id: 3
+To id: 9
+Proposal Number: 1
+Time sent: 15:28:01.770829
+
+Prepare
+From id: 3
+To id: 8
+Proposal Number: 1
+Time sent: 15:28:01.760496
+
+Prepare
+From id: 3
+To id: 6
+Proposal Number: 1
+Time sent: 15:28:01.754841
+
+Prepare
+From id: 3
+To id: 5
+Proposal Number: 1
+Time sent: 15:28:01.752651
+
+Prepare
+From id: 3
+To id: 7
+Proposal Number: 1
+Time sent: 15:28:01.758351
+

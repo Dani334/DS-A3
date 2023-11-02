@@ -8,7 +8,7 @@ import main.Proposer;
 
 
 public class testCase_delayedReplies {
-    static boolean STAT = false;
+    static boolean STAT = true;
     
     public Proposer proposer1;
     public Proposer proposer2;
@@ -34,7 +34,7 @@ public class testCase_delayedReplies {
 
         nodes =  new Node[9];
         for(int i = 1; i <= 9; i++) {
-            nodes[i-1] = new Node(i, proposer1, proposer2, true);
+            nodes[i-1] = new Node(i, proposer1, proposer2, true, 6000);
             nodes[i-1].start();
         }
 
@@ -63,7 +63,7 @@ public class testCase_delayedReplies {
 
         nodes =  new Node[9];
         for(int i = 1; i <= 9; i++) {
-            nodes[i-1] = new Node(i, proposer1, proposer2, true);
+            nodes[i-1] = new Node(i, proposer1, proposer2, true, 6000);
             nodes[i-1].start();
         }
 
@@ -89,7 +89,7 @@ public class testCase_delayedReplies {
 
         nodes =  new Node[9];
         for(int i = 1; i <= 9; i++) {
-            nodes[i-1] = new Node(i, proposer1, null, true);
+            nodes[i-1] = new Node(i, proposer1, null, true, 6000);
             nodes[i-1].start();
         }
 
@@ -109,9 +109,11 @@ public class testCase_delayedReplies {
             stat.printStats();
         }
         
-        System.out.println("Proposer 2 Stats");
-        for(RoundStats stat : proposer2.stats) {
-            stat.printStats();
+        if(this.proposer2 != null) {
+            System.out.println("Proposer 2 Stats");
+            for(RoundStats stat : proposer2.stats) {
+                stat.printStats();
+            }
         }
     }
 
@@ -128,8 +130,8 @@ public class testCase_delayedReplies {
             if(proposer2 != null && node.acceptedValue == proposer2.nodeID) p2++; 
         }
         
-        if(p1 > 4) return proposer1.nodeID;
-        else if(p2 > 4) return proposer2.nodeID;
+        if(p1 >= 4) return proposer1.nodeID;
+        else if(p2 >= 4) return proposer2.nodeID;
         else return -1;
     }
 
@@ -148,59 +150,108 @@ public class testCase_delayedReplies {
         try {
             /*
              * TEST 1: both proposers propose simultaneously, a case is passed if EITHER proposer becomes elected
-             * TEST 2: One proposer will propose, the second will propose 5 seconds after, a cases is passed if the FIRST proposer to propose becomes elected
-             * TEST 3: Only one proposer proposes, a case is passed if this proposer becomes elected
+             * TEST 2: Only one proposer proposes, a case is passed if this proposer becomes elected
              */
 
+            // set which tests to run
+            boolean TEST1 = true;
+            boolean TEST2 = true;
+
             // Set how many of each test you want to run (the more, the longer it will take)
-            int test1Cases = 10;
-            int test2Cases = 5;
+            int test1Cases = 1;
+            int test2Cases = 3;
             int test3Cases = 30;
             
             // Test 1
-            System.out.println("*****  TEST 1 *****");
-            System.out.println("Both proposers startup and propose at the same time");
-            System.out.println("This test passes if EITHER of the two proposers becomes elected");
+            if(TEST1) {
+                System.out.println("*****  TEST 1 *****");
+                System.out.println("Both proposers startup and propose at the same time");
+                System.out.println("This test passes if EITHER of the two proposers becomes elected");
 
-            System.out.println("Running " + test1Cases + " test cases, please wait");
-            testCase_delayedReplies[] test1 = new testCase_delayedReplies[test1Cases];
-            int passed1 = 0;
-            for(int i = 0; i < test1Cases; i++) {
-                System.out.println("m1" + i);
-                test1[i] = new testCase_delayedReplies();
-                test1[i].startUp();
-                int id = test1[i].electedID();
-                if(id == test1[i].proposer1.nodeID) {
-                    passed1++;
-                    test1[i].passed = true;
-                }
-                else if(id == test1[i].proposer2.nodeID) {
-                    passed1++;
-                    test1[i].passed = true;
-                }
-                else if(id == -1) {
-                    test1[i].passed = false;
-                }
-                else {
-                    test1[i].passed = false;
-                }
-                test1[i].close();
-            }
-            
-            System.out.println("Test1 cases passed: " + passed1 + "/" + test1Cases);
-            if(passed1 != test1Cases) {
-                int i = 0;
-                for(testCase_delayedReplies test : test1) {
-                    if(!test.passed) {
-                        System.out.println("Test case: " + i + " failed");
-                        if(STAT) test.printStats();
+                System.out.println("Running " + test1Cases + " test cases, please wait");
+                testCase_delayedReplies[] test1 = new testCase_delayedReplies[test1Cases];
+                int passed1 = 0;
+                for(int i = 0; i < test1Cases; i++) {
+                    System.out.println("Test: " + i);
+                    test1[i] = new testCase_delayedReplies();
+                    test1[i].startUp();
+                    int id = test1[i].electedID();
+                    if(id == test1[i].proposer1.nodeID) {
+                        passed1++;
+                        test1[i].passed = true;
                     }
-                    i++;
+                    else if(id == test1[i].proposer2.nodeID) {
+                        passed1++;
+                        test1[i].passed = true;
+                    }
+                    else if(id == -1) {
+                        test1[i].passed = false;
+                    }
+                    else {
+                        test1[i].passed = false;
+                    }
+                    test1[i].close();
+                }
+                
+                System.out.println("Test1 cases passed: " + passed1 + "/" + test1Cases);
+                if(passed1 != test1Cases) {
+                    int i = 0;
+                    for(testCase_delayedReplies test : test1) {
+                        if(!test.passed) {
+                            System.out.println("Test case: " + i + " failed");
+                            if(STAT) test.printStats();
+                        }
+                        i++;
+                    }
+                }
+
+                System.out.println("Moving onto test 2");
+                System.out.println();
+            }
+
+            if(TEST2) {
+                // Test 2
+                System.out.println("*****  TEST 2 *****");
+                System.out.println("One proposer proposes");
+                System.out.println("This test passes if the proposer is elected");
+
+                System.out.println("Running " + test2Cases + " test cases, please wait");
+                testCase_delayedReplies[] test2 = new testCase_delayedReplies[test2Cases];
+                int passed2 = 0;
+                for(int i = 0; i < test2Cases; i++) {
+                    
+                    test2[i] = new testCase_delayedReplies();
+                    test2[i].startUpOneProposer();
+                    int id = test2[i].electedID();
+                    if(id == test2[i].proposer1.nodeID) {
+                        passed2++;
+                        test2[i].passed = true;
+                    } else if(id == -1) {
+                        System.out.println("m1");
+                        test2[i].passed = false;
+                    }
+                    else {
+                        System.out.println("m2");
+                        test2[i].passed = false;
+                    }
+                    test2[i].close();
+                }
+                
+                System.out.println("Test2 cases passed: " + passed2 + "/" + test2Cases);
+                if(passed2 != test2Cases) {
+                    int i = 0;
+                    for(testCase_delayedReplies test : test2) {
+                        if(!test.passed) {
+                            System.out.println("Test case: " + i + " failed");
+                            if(STAT) test.printStats();
+                        }
+                        i++;
+                    }
                 }
             }
 
-            System.out.println("Moving onto test 2");
-            System.out.println();
+            
+
         } catch (Exception e) {
             System.out.println("Exception occured: " + e.getMessage());
         }

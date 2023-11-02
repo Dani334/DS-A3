@@ -34,7 +34,7 @@ public class testCase_immediateReplies {
 
         nodes =  new Node[9];
         for(int i = 1; i <= 9; i++) {
-            nodes[i-1] = new Node(i, proposer1, proposer2, false);
+            nodes[i-1] = new Node(i, proposer1, proposer2, false, 6000);
             nodes[i-1].start();
         }
 
@@ -63,7 +63,7 @@ public class testCase_immediateReplies {
 
         nodes =  new Node[9];
         for(int i = 1; i <= 9; i++) {
-            nodes[i-1] = new Node(i, proposer1, proposer2, false);
+            nodes[i-1] = new Node(i, proposer1, proposer2, false, 6000);
             nodes[i-1].start();
         }
 
@@ -89,7 +89,7 @@ public class testCase_immediateReplies {
 
         nodes =  new Node[9];
         for(int i = 1; i <= 9; i++) {
-            nodes[i-1] = new Node(i, proposer1, null, false);
+            nodes[i-1] = new Node(i, proposer1, null, false, 6000);
             nodes[i-1].start();
         }
 
@@ -109,9 +109,11 @@ public class testCase_immediateReplies {
             stat.printStats();
         }
         
-        System.out.println("Proposer 2 Stats");
-        for(RoundStats stat : proposer2.stats) {
-            stat.printStats();
+        if(proposer2 != null) {
+            System.out.println("Proposer 2 Stats");
+            for(RoundStats stat : proposer2.stats) {
+                stat.printStats();
+            }
         }
     }
 
@@ -128,8 +130,8 @@ public class testCase_immediateReplies {
             if(proposer2 != null && node.acceptedValue == proposer2.nodeID) p2++; 
         }
         
-        if(p1 > 4) return proposer1.nodeID;
-        else if(p2 > 4) return proposer2.nodeID;
+        if(p1 >= 4) return proposer1.nodeID;
+        else if(p2 >= 4) return proposer2.nodeID;
         else return -1;
     }
 

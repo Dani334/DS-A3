@@ -5,7 +5,16 @@ There are two main files to the Paxos implementation, Node and Proposer. The pro
 
 The protocol starts by randomly creating two proposers between 1-3. It then starts all the nodes on a listening loop, awaiting for all new connections. Note all socket connections use port 6001-6009. Then in each testCase java file, it will perform different tests and gather information to see if they passed.
 
-There are some extra classes in use
+### Delays Implementation
+
+The way I have simulated delays and dropping of messages is by using a message queue and timestamps on each message. Each message is receieved instantly but if the delayed boolean is set then it will randomise either the chance it replies instantly, the chance is drops the message or the time before replying to the message. The profiles were set up as follows:
+
+Member 1: reply instantly to everything no matter what
+Member 2: has a 30% chance to reply instantly to messages otherwise has a 7.5 second delay
+Member 3: has a 10% chance to drop a message. Also has a 100% chance for a 5 second delay if no messages dropped
+Members 4-9: have a randomised interval between 0 and 2.5 delay
+
+There are some extra classes in use in Message/
 
 - Message.java
 - Prepare.java
@@ -16,7 +25,7 @@ There are some extra classes in use
 
 All used to create the messages used in communication
 
-AND
+AND in helper/
 
 - RoundStats.java
 
@@ -47,9 +56,9 @@ Once all ports have been freed up you can run `make` to compile all classes and 
 
 ```
 
-java testCase_immediateReplies
-java testCase_delayedReplies
+java testCases/testCase_immediateReplies
+java testCases/testCase_delayedReplies
 
 ```
 
-Please note that the amount of test cases within each major test case can be set, for example in testCase_immediateReplies.java, `int test1Cases = 30;` can be set to equal a higher number if you would like more randomised tests to be run, just ensure you are using `make` again before running `java testCase_immediateReplies` 
+Please note that the amount of test cases within each major test case can be set, for example in testCase_immediateReplies.java, `int test1Cases = 30;` can be set to equal a higher/lower number if you would like more randomised tests to be run, just ensure you are using `make` again before running `java testCases/testCase_immediateReplies` 
