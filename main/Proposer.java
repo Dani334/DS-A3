@@ -34,11 +34,10 @@ public class Proposer extends Node {
     public CountDownLatch latchAccept; 
     public CountDownLatch latchReply;
     public CountDownLatch latchNack;
-    private static final Object lock = new Object();
 
     public Vector<Integer> acceptorIds = new Vector<>();
 
-    private Boolean STAT = false;
+    public Boolean STAT = false;
     
     /**
      * Calls the constructor of the super-class Node, initialises proposlal number, and latches
@@ -116,8 +115,8 @@ public class Proposer extends Node {
                     System.out.println(nodeID + " Moving on to phase 2");
                     System.out.println("Replies: " + this.receivedReplies);
                     System.out.println("Promises: " + this.receivedPromises);
+                    System.out.println();
                 }
-                
             }
 
         } else {
@@ -127,6 +126,7 @@ public class Proposer extends Node {
                     System.out.println(nodeID + " failed to receive 8 replies or 4 promises");
                     System.out.println("Replies: " + this.receivedReplies);
                     System.out.println("Promises: " + this.receivedPromises);
+                    System.out.println();
                 }
             }
         }
@@ -172,13 +172,15 @@ public class Proposer extends Node {
         if(awaitAccepted()) {
             if(STAT) {
 
-                System.out.println(nodeID + "true returned");
+                System.out.println(nodeID + " true returned");
                 System.out.println("Accepteds receieved: " + numAccepted);
+                System.out.println();
             }
         } else {
             if(STAT) {
-                System.out.println(nodeID + "false returned");
+                System.out.println(nodeID + " false returned");
                 System.out.println("Accepteds receieved: " + numAccepted);
+                System.out.println();
 
             }
         }

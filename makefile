@@ -8,7 +8,8 @@ CLASSES = \
 		main/Proposer.java \
 		testCases/testCase_immediateReplies.java \
 		testCases/testCase_delayedReplies.java \
-		testCases/testCase_unitTests.java
+		testCases/testCase_unitTests.java \
+		testCases/testCase_runThrough.java
  
 default: classes
 
@@ -20,3 +21,4 @@ clean:
 	$(RM) main/*.class
 	$(RM) helper/*.class
 	$(RM) testCases/*.class
+	$(RM) testCases/*.txt

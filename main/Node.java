@@ -34,12 +34,14 @@ public class Node extends Thread {
 
     public boolean delayed;
 
-    private Boolean PREPARE = true;
-    private Boolean PROMISE = true;
-    private Boolean ACCEPT = true;
-    private Boolean ACCEPTED = true;
-    private Boolean NACK = true;
-    private Boolean RESPONSE = true;
+    protected static final Object lock = new Object();
+
+    public Boolean PREPARE = false;
+    public Boolean PROMISE = false;
+    public Boolean ACCEPT = false;
+    public Boolean ACCEPTED = false;
+    public Boolean NACK = false;
+    public Boolean RESPONSE = false;
 
     /**
      * This constructor is used by the proposer sub-class and initialises node id
@@ -177,32 +179,48 @@ public class Node extends Thread {
             
             if(canReply) {
                 Message message = messageQueue.poll();
+
+                synchronized(lock) {
+                    if(message.name.equals("Prepare") && PREPARE) message.printMessage();
+                    if(message.name.equals("Promise") && PROMISE){
+                      Promise promise = (Promise) message;
+                      promise.printMessage();  
+                    } 
+                    if(message.name.equals("Accept") && ACCEPT) {
+                        Accept accept = (Accept) message;
+                        accept.printMessage();  
+                    }
+                    if(message.name.equals("Accepted") && ACCEPTED) {
+                        Accepted accepted = (Accepted) message;
+                        accepted.printMessage();  
+                    }
+                    if(message.name.equals("Nack") && NACK) message.printMessage();
+                    if(message.name.equals("Response") && RESPONSE) {
+                        Response response = (Response) message;
+                        response.printMessage();  
+                    }
+                }
+
                 if(message.name.equals("Prepare")) {
-                    if(PREPARE) message.printMessage();
                     handlePrepare((Prepare) message);
                 }
                 else if(message.name.equals("Promise")) {
                     Promise promise = (Promise) message;
-                    if(PROMISE) promise.printMessage();
                     handlePromise(promise);
                     
                 }
                 else if(message.name.equals("Accept")) {
                     Accept accept = (Accept) message;
-                    if(ACCEPT) accept.printMessage();
                     handleAccept(accept);
                 }
                 else if(message.name.equals("Accepted")) {
                     Accepted accepted = (Accepted) message;
-                    if(ACCEPTED) accepted.printMessage();
                     handleAccepted(accepted);
                 } else if(message.name.equals("Nack")) {
                     Nack nack = (Nack) message;
-                    if(NACK) nack.printMessage();
                     handleNack(nack);
                 } else if(message.name.equals("Response")) {
                     Response response = (Response) message;
-                    if(RESPONSE) response.printMessage();
                     handleResponse(response);
                 }
             }

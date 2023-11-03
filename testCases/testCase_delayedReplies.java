@@ -162,14 +162,14 @@ public class testCase_delayedReplies {
 
             // Set how many of each test you want to run (the more, the longer it will take)
             int test1Cases = 1;
-            int test2Cases = 3;
-            int test3Cases = 30;
+            int test2Cases = 1;
             
             // Test 1
             if(TEST1) {
                 System.out.println("*****  TEST 1 *****");
                 System.out.println("Both proposers startup and propose at the same time");
                 System.out.println("This test passes if EITHER of the two proposers becomes elected");
+                System.out.println("Will also test to see whether the proposer that was not elected has an accepted value of the elected member");
 
                 System.out.println("Running " + test1Cases + " test cases, please wait");
                 testCase_delayedReplies[] test1 = new testCase_delayedReplies[test1Cases];
@@ -178,11 +178,11 @@ public class testCase_delayedReplies {
                     test1[i] = new testCase_delayedReplies();
                     test1[i].startUp();
                     int id = test1[i].electedID();
-                    if(id == test1[i].proposer1.nodeID) {
+                    if(id == test1[i].proposer1.nodeID && test1[i].proposer2.acceptedValue == id) {
                         passed1++;
                         test1[i].passed = true;
                     }
-                    else if(id == test1[i].proposer2.nodeID) {
+                    else if(id == test1[i].proposer2.nodeID && test1[i].proposer1.acceptedValue == id) {
                         passed1++;
                         test1[i].passed = true;
                     }

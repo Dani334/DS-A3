@@ -166,6 +166,7 @@ public class testCase_immediateReplies {
             System.out.println("*****  TEST 1 *****");
             System.out.println("Both proposers startup and propose at the same time");
             System.out.println("This test passes if EITHER of the two proposers becomes elected");
+            System.out.println("Will also test to see whether the proposer that was not elected has an accepted value of the elected member");
 
             System.out.println("Running " + test1Cases + " test cases, please wait");
             testCase_immediateReplies[] test1 = new testCase_immediateReplies[test1Cases];
@@ -174,11 +175,11 @@ public class testCase_immediateReplies {
                 test1[i] = new testCase_immediateReplies();
                 test1[i].startUp();
                 int id = test1[i].electedID();
-                if(id == test1[i].proposer1.nodeID) {
+                if(id == test1[i].proposer1.nodeID && test1[i].proposer2.acceptedValue == id) {
                     passed1++;
                     test1[i].passed = true;
                 }
-                else if(id == test1[i].proposer2.nodeID) {
+                else if(id == test1[i].proposer2.nodeID && test1[i].proposer1.acceptedValue == id) {
                     passed1++;
                     test1[i].passed = true;
                 }
@@ -212,6 +213,7 @@ public class testCase_immediateReplies {
             System.out.println("*****  TEST 2 *****");
             System.out.println("First proposer proposes, then second one proposes after 5 seconds");
             System.out.println("This test passes if the first proposer is elected as 5 seconds is more than enough time to be elected");            
+            System.out.println("Will also test to see whether the proposer that was not elected has an accepted value of the elected member");
 
             System.out.println("Running " + test2Cases + " test cases, please wait");
             testCase_immediateReplies[] test2 = new testCase_immediateReplies[test2Cases];
@@ -220,7 +222,7 @@ public class testCase_immediateReplies {
                 test2[i] = new testCase_immediateReplies();
                 test2[i].startUpDelay();
                 int id = test2[i].electedID();
-                if(id == test2[i].proposer1.nodeID) {
+                if(id == test2[i].proposer1.nodeID && test2[i].proposer2.acceptedValue == id) {
                     passed2++;
                     test2[i].passed = true;
                 }
