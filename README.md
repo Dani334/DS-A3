@@ -36,23 +36,29 @@ To save the stats of each round of each proposer used for analysis.
 
 ### Directory Structure
 
-├── helper
-│   ├── roundStats.java
-├── main
-│   ├── Node.java
-│   ├── Proposer.java
+```
+.
 ├── Message
 │   ├── Accept.java
 │   ├── Accepted.java
-|   |-- Message.java
-|   |-- Nack.java
-|   |-- Prepare.java
-|   |-- Promise.java
-|   |-- Response.java
-├── testCases
-|   |-- testCase_delayedReplies.java
-|   |-- testCase_immediateReplies.java
-|   |-- testCase_unitTests.java
+│   ├── Message.java
+│   ├── Nack.java
+│   ├── Prepare.java
+│   ├── Promise.java
+│   └── Response.java
+├── README.md
+├── freePorts.sh
+├── helper
+│   └── RoundStats.java
+├── main
+│   ├── Node.java
+│   └── Proposer.java
+├── makefile
+└── testCases
+    ├── testCase_delayedReplies.java
+    ├── testCase_immediateReplies.java
+    └── testCase_unitTests.java
+```
 
 ## Testing
 
