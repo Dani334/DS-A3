@@ -133,13 +133,11 @@ public class Node extends Thread {
      */
     public void reply() throws Exception {
 
-
         double M2_delay_chance = new Random().nextDouble();
         double M3_delay_chance = new Random().nextDouble();
         boolean M3_notDropped = true;
         int M4_9Delay = new Random().nextInt(2500) + 1;
 
-        
         while(!messageQueue.isEmpty()) {
             
             boolean canReply = false;
@@ -152,54 +150,30 @@ public class Node extends Thread {
                 else if(nodeID == 2) {
                     // member 2 has a 30% chance of an instant reply, 7.5 second delay otherwise
                     if(M2_delay_chance > 0.3) {
-                        if(messageQueue.peek().time.until(time, ChronoUnit.MILLIS) > 7500) {
-                            canReply = true;
-                        }
-                    } else {
-                        canReply = true;
-                    }
-                } else if(nodeID == 3) {
+                        if(messageQueue.peek().time.until(time, ChronoUnit.MILLIS) > 7500) canReply = true;
+
+                    } 
+                    else canReply = true;
+                } 
+                else if(nodeID == 3) {
                     // member 3 has a 10% chance of dropping a message, else it has a 5 second response delay
                     if(M3_delay_chance > 0.9 && M3_notDropped) {
                         M3_notDropped = false;
                         messageQueue.poll();
-                    } else if(messageQueue.peek().time.until(time, ChronoUnit.MILLIS) > 5000) {
-                        canReply = true;
-                    }
-                } else if(nodeID > 3) {
+                    } else if(messageQueue.peek().time.until(time, ChronoUnit.MILLIS) > 5000) canReply = true;
+                } 
+                else if(nodeID > 3) {
                     // members 4-9 have a random interval between 1 millisecond and 2500 milliseconds to reply
-                    
-                    if(messageQueue.peek().time.until(time, ChronoUnit.MILLIS) > M4_9Delay) {
-                        canReply = true;
-                    }
+                    if(messageQueue.peek().time.until(time, ChronoUnit.MILLIS) > M4_9Delay) canReply = true;
                 }
-    
-            } else canReply = true;
+            } 
+            else canReply = true;
 
             
             if(canReply) {
                 Message message = messageQueue.poll();
-
-                synchronized(lock) {
-                    if(message.name.equals("Prepare") && PREPARE) message.printMessage();
-                    if(message.name.equals("Promise") && PROMISE){
-                      Promise promise = (Promise) message;
-                      promise.printMessage();  
-                    } 
-                    if(message.name.equals("Accept") && ACCEPT) {
-                        Accept accept = (Accept) message;
-                        accept.printMessage();  
-                    }
-                    if(message.name.equals("Accepted") && ACCEPTED) {
-                        Accepted accepted = (Accepted) message;
-                        accepted.printMessage();  
-                    }
-                    if(message.name.equals("Nack") && NACK) message.printMessage();
-                    if(message.name.equals("Response") && RESPONSE) {
-                        Response response = (Response) message;
-                        response.printMessage();  
-                    }
-                }
+                
+                synchronized(lock) {print(message);}
 
                 if(message.name.equals("Prepare")) {
                     handlePrepare((Prepare) message);
@@ -229,6 +203,27 @@ public class Node extends Thread {
 
     }
 
+    public void print(Message message) {
+
+        if(message.name.equals("Prepare") && PREPARE) message.printMessage();
+        if(message.name.equals("Promise") && PROMISE){
+            Promise promise = (Promise) message;
+            promise.printMessage();  
+        } 
+        if(message.name.equals("Accept") && ACCEPT) {
+            Accept accept = (Accept) message;
+            accept.printMessage();  
+        }
+        if(message.name.equals("Accepted") && ACCEPTED) {
+            Accepted accepted = (Accepted) message;
+            accepted.printMessage();  
+        }
+        if(message.name.equals("Nack") && NACK) message.printMessage();
+        if(message.name.equals("Response") && RESPONSE) {
+            Response response = (Response) message;
+            response.printMessage();  
+        }
+    }
     /**
      * Handles a prepare message
      * Will send a promise if the proposal number is higher than any promised proposal numbers
@@ -406,6 +401,11 @@ public class Node extends Thread {
         }
     }
 
+    /**
+     * Handles the case of receiving a response message and sets the accepted proposal and value
+     * 
+     * @param response The response message received
+     */
     public void handleResponse(Response response) {
         this.acceptedProposal = response.proposalNumber;
         this.acceptedValue = response.proposalValue;
