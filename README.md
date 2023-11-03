@@ -94,6 +94,7 @@ On any processes if they show up. If none show up, no need to kill and processes
 - testCase_immediateReplies.java
 - testCase_delayedReplies.java
 - testCase_unitTests.java
+- testCase_runThrough.java
 
 Once all ports have been freed up you can run `make` to compile all classes and then run the following test cases:
 
