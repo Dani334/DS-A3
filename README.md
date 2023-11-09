@@ -7,19 +7,19 @@ There are two main files to the Paxos implementation, Node.java and Proposer.jav
 2. It will wait and receieve either Nacks or Promises depending on if an Acceptor can Promise
 3. It will move on to phase 2 if it receives 4 Promises (majority including itself)
 4. It will start to send out Accepts to those that Promised
-5. It will wait and recieve either Nacks or Accepted's depending on if an Acceptor can Accept
+5. It will wait and receive either Nacks or Accepted's depending on if an Acceptor can Accept
 6. It will send out a Response message to all other nodes if it receives 4 Accepted's messages
 
 The protocol starts by randomly creating two proposers between 1-3. It then starts all the nodes on a listening loop, awaiting for all new connections. Note all socket connections use port 6001-6009. Then in each testCase java file, it will perform different tests and gather information to see if they passed.
 
 ### Delays Implementation
 
-The way I have simulated delays and dropping of messages is by using a message queue and timestamps on each message. Each message is receieved instantly but if the delayed boolean is set then it will randomise either the chance it replies instantly, the chance is drops the message or the time before replying to the message. The profiles were set up as follows:
+The way I have simulated delays and dropping of messages is by using a message queue and timestamps on each message. Each message is receieved instantly but if the delayed boolean is set then it will randomise either the chance it replies instantly, the chance it drops the message or the time before replying to the message. The profiles were set up as follows:
 
 - Member 1: reply instantly to everything no matter what
 - Member 2: has a 30% chance to reply instantly to messages otherwise has a 7.5 second delay
 - Member 3: has a 10% chance to drop a message. Also has a 100% chance for a 5 second delay if no messages dropped
-- Members 4-9: have a randomised interval between 0 and 2.5 seconds delay
+- Members 4-9: have a randomised interval between 0 and 2.5 seconds delay to reply to messages
 
 ### Helper classes
 
@@ -84,7 +84,7 @@ This will display any ports that are currently in use that my implementation rel
 kill -9 <PID>
 ```
 
-On any processes if they show up. If none show up, no need to kill and processes. If you cannot kill any of these processes, please change `public int startPort = 6000;` to start from anything other than 6000 with enough room for the next 9 ports available. This must be changed in the following files:
+On any processes if they show up. If none show up, no need to kill any processes. If you cannot kill any of these processes, please change `public int startPort = 6000;` to start from anything other than 6000 with enough room for the next 9 ports available. This must be changed in the following files:
 
 - Node.java
 - Proposer.java
@@ -94,7 +94,7 @@ On any processes if they show up. If none show up, no need to kill and processes
 - testCase_runThroughAll.java
 - testCase_runThroughProposer.java
 
-Once all ports have been freed up you can run `make` to compile all classes and then run the following test cases:
+Once all ports have been freed you can run `make` to compile all classes and then run the following test cases:
 
 ```
 java testCases/testCase_immediateReplies
