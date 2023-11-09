@@ -5,7 +5,7 @@ import java.util.Random;
 import main.Node;
 import main.Proposer;
 
-public class testCase_runThrough {
+public class testCase_runThroughAll {
 
     public int startPort = 6000;
 
@@ -106,7 +106,7 @@ public class testCase_runThrough {
 
         try {
             
-            testCase_runThrough test = new testCase_runThrough();
+            testCase_runThroughAll test = new testCase_runThroughAll();
             System.out.println("-----   NO DELAY   -----");
             test.startUp();
             test.close();

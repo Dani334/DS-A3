@@ -9,7 +9,8 @@ CLASSES = \
 		testCases/testCase_immediateReplies.java \
 		testCases/testCase_delayedReplies.java \
 		testCases/testCase_unitTests.java \
-		testCases/testCase_runThrough.java
+		testCases/testCase_runThroughAll.java \
+		testCases/testCase_runThroughProposer.java \
  
 default: classes
 

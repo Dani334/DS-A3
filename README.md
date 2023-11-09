@@ -64,7 +64,8 @@ To save the stats of each round of each proposer used for analysis.
 └── testCases
     ├── testCase_delayedReplies.java
     ├── testCase_immediateReplies.java
-    ├── testCase_runThrough.java
+    ├── testCase_runThroughAll.java
+    ├── testCase_runThroughProposer.java
     └── testCase_unitTests.java
 ```
 
@@ -73,18 +74,14 @@ To save the stats of each round of each proposer used for analysis.
 Before beginning testing please run the following commands:
 
 ```
-
 chmod +x freePorts.sh
 sh freePorts.sh
-
 ```
 
 This will display any ports that are currently in use that my implementation relies on, please use the following command:
 
 ```
-
 kill -9 <PID>
-
 ```
 
 On any processes if they show up. If none show up, no need to kill and processes. If you cannot kill any of these processes, please change `public int startPort = 6000;` to start from anything other than 6000 with enough room for the next 9 ports available. This must be changed in the following files:
@@ -94,7 +91,8 @@ On any processes if they show up. If none show up, no need to kill and processes
 - testCase_immediateReplies.java
 - testCase_delayedReplies.java
 - testCase_unitTests.java
-- testCase_runThrough.java
+- testCase_runThroughAll.java
+- testCase_runThroughProposer.java
 
 Once all ports have been freed up you can run `make` to compile all classes and then run the following test cases:
 
@@ -111,11 +109,15 @@ java testCases/testCase_unitTests
 ```
 
 ```
-java testCases/testCase_runThrough > testCases/output.txt
+java testCases/testCase_runThroughAll > testCases/all.txt
+```
+
+```
+java testCases/testCase_runThroughProposer > testCases/proposer.txt
 ```
 
 Please analyse the terminal output for information regarding the passing of test cases.
 
 Please note that the amount of test cases within each major test case can be set, for example in testCase_immediateReplies.java, `int test1Cases = 30;` can be set to equal a higher/lower number if you would like more randomised tests to be run, just ensure you are using `make` again before running `java testCases/testCase_immediateReplies`. You will find that the delayed replies test cases only has a few randomised tests conducted, which is due to some cases taking a long time and was set so that the tests do not take long to finish. 
 
-The last test case is a general optional run through to see all messages and round stats for each proposer. It runs through the two cases - delay and no delay. To analyse the output you must open the output.txt file and `cmd+f` OR `ctrl+f` and search DELAY to find the start/end of each case. Also note that the end of the case is when consensus is reached and there may still be messages transmitting which leads to messages being displayed after the END DELAY message.
+The `testCase_runThroughAll.java` test case is a general optional run through to see all messages and round stats for each proposer. It runs through the two cases - delay and no delay. To analyse the output you must open the output.txt file and `cmd+f` OR `ctrl+f` and search DELAY to find the start/end of each case. Also note that the end of the case is when consensus is reached and there may still be messages transmitting which leads to messages being displayed after the END DELAY message. There is also a more concise `testCase_runThroughProposer.java` which only shows the messages RECEIVED at each proposer making the output a bit more readable.

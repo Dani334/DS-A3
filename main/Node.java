@@ -203,6 +203,11 @@ public class Node extends Thread {
 
     }
 
+    /**
+     * Checks what type the message is and calls the relevant message method
+     * 
+     * @param message
+     */
     public void print(Message message) {
 
         if(message.name.equals("Prepare") && PREPARE) message.printMessage();
