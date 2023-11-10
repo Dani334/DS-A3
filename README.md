@@ -123,4 +123,8 @@ Please analyse the terminal output for information regarding the passing of test
 
 Please note that the amount of test cases within each major test case can be set, for example in testCase_immediateReplies.java, `int test1Cases = 30;` can be set to equal a higher/lower number if you would like more randomised tests to be run, just ensure you are using `make` again before running `java testCases/testCase_immediateReplies`. You will find that the delayed replies test cases only has a few randomised tests conducted, which is due to some cases taking a long time and was set so that the tests do not take long to finish. 
 
-The `testCase_runThroughAll.java` test case is a general optional run through to see all messages and round stats for each proposer. It runs through the two cases - delay and no delay. To analyse the output you must open the output.txt file and `cmd+f` OR `ctrl+f` and search DELAY to find the start/end of each case. Also note that the end of the case is when consensus is reached and there may still be messages transmitting which leads to messages being displayed after the END DELAY message. There is also a more concise `testCase_runThroughProposer.java` which only shows the messages RECEIVED at each proposer making the output a bit more readable.
+The last two test cases are run throughs with printouts for every message receieved by every node.
+`testCase_runThroughAll.java` Shows the messages of every node and is saved to testCases/all.txt
+`testCase_runThroughProposer.java` Shows the messages of only the proposer nodes and is saved to testCases/proposer.txt
+
+These are optional to view but show the protocal in action. To see the start and end of each case `cmd+f` OR `ctrl+f` and search DELAY. Also note that the end of the case is when consensus is reached and there may still be messages transmitting which leads to messages being displayed after the END DELAY message.
