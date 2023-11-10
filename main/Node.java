@@ -93,7 +93,6 @@ public class Node extends Thread {
                 }
             }
         } catch (Exception e) {
-            
         }
 
     }
@@ -107,7 +106,7 @@ public class Node extends Thread {
     public void handleConnection(Socket socket) throws Exception {
         
         inObj = new ObjectInputStream(socket.getInputStream());
-        outObj = new ObjectOutputStream(socket.getOutputStream());
+        
         Message message = (Message) inObj.readObject();
         
         messageQueue.add(message);

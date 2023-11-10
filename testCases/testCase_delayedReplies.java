@@ -10,6 +10,7 @@ import main.Proposer;
 public class testCase_delayedReplies {
 
     public int startPort = 6000;
+    public static int testDelay = 15;
 
     static boolean STAT = true;
     
@@ -193,6 +194,7 @@ public class testCase_delayedReplies {
                         test1[i].passed = false;
                     }
                     test1[i].close();
+                    Thread.sleep(testDelay);
                 }
                 
                 System.out.println("Test1 cases passed: " + passed1 + "/" + test1Cases);
@@ -237,6 +239,7 @@ public class testCase_delayedReplies {
                         test2[i].passed = false;
                     }
                     test2[i].close();
+                    Thread.sleep(testDelay);
                 }
                 
                 System.out.println("Test2 cases passed: " + passed2 + "/" + test2Cases);

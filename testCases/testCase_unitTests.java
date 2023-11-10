@@ -11,6 +11,7 @@ import main.*;
 public class testCase_unitTests {
     
     int startPort = 6000;
+    public static int testDelay = 15;
 
     ServerSocket serverSocket;
     Socket socketOut;
@@ -85,7 +86,7 @@ public class testCase_unitTests {
         }
 
         closeNode();
-        
+        Thread.sleep(testDelay);
         // Test 2
         startNode();
         testNode.highestPromisedProposal = 0;
@@ -103,7 +104,7 @@ public class testCase_unitTests {
             System.out.println("Test 1.2 Unsuccessful");
         }
         closeNode();
-
+        Thread.sleep(testDelay);
         // Test 3
         startNode();
         testNode.highestPromisedProposal = 50;
@@ -121,7 +122,7 @@ public class testCase_unitTests {
             System.out.println("Test 1.3 Unsuccessful");
         }
         closeNode();
-
+        Thread.sleep(testDelay);
         System.out.println("Unit 1 Tests Passed: " + passed + "/3");
         if(passed == 3) return true;
         return false;
@@ -151,7 +152,7 @@ public class testCase_unitTests {
             passed++;
         } else System.out.println("Unit 2.1 Unsuccessful");
         closeNode();
-
+        Thread.sleep(testDelay);
         // Test 2
         startNode();
         promise = new Promise(proposerTest.lastProposalNumber, 2, 1, 1, 0);
@@ -266,15 +267,19 @@ public class testCase_unitTests {
             testCase_unitTests test = new testCase_unitTests();
             // Test 1 handle prepare
             test.handlePrepareTest();
+            Thread.sleep(testDelay);
 
             // Test 2 handle promise
             test.handlePromiseTest();
+            Thread.sleep(testDelay);
 
             // Test 3 handle accepted
             test.handleAcceptedTest();
+            Thread.sleep(testDelay);
 
             // Test 4 handle nack
             test.handleNackTest();
+            Thread.sleep(testDelay);
 
             // Test 5 handle response
             test.handleResponseTest();

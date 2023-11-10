@@ -8,6 +8,7 @@ import main.Proposer;
 public class testCase_runThroughProposer {
 
     public int startPort = 6000;
+    public static int testDelay = 15;
 
     static boolean STAT = false;
     
@@ -130,6 +131,7 @@ public class testCase_runThroughProposer {
             test.close();
             System.out.println("-----   END NO DELAY   -----");
             System.out.println();
+            Thread.sleep(testDelay);
             System.out.println("-----   DELAY   -----");
             test.startUpDelay();
             System.out.println("-----   END DELAY   -----");

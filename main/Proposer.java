@@ -64,7 +64,7 @@ public class Proposer extends Node {
         try {
             Phase1(this.lastProposalNumber);
         } catch(Exception e) {
-            System.out.println(e.getMessage());
+            System.out.println("Proposer run Exception: " + e.getMessage());
         }
     }
 

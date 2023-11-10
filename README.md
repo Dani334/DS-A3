@@ -94,6 +94,8 @@ On any processes if they show up. If none show up, no need to kill any processes
 - testCase_runThroughAll.java
 - testCase_runThroughProposer.java
 
+There is a testDelay set in each file. This is due to the fact that the OS on which the university runs too fast and exceptions occur in the form of an address not being able to bind because it was not closed yet on the previous test. The testDelay is defaultly set to 15 milliseconds as this seems to work in my own testing on the university system, but if you encounter a 'Constructor exception occured: Address already in use (Bind failed)' you may need to increase this value (it can be found at the top of every test case file).
+
 Once all ports have been freed you can run `make` to compile all classes and then run the following test cases:
 
 ```
@@ -115,6 +117,7 @@ java testCases/testCase_runThroughAll > testCases/all.txt
 ```
 java testCases/testCase_runThroughProposer > testCases/proposer.txt
 ```
+
 
 Please analyse the terminal output for information regarding the passing of test cases.
 

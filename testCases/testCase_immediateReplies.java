@@ -8,6 +8,7 @@ import main.Proposer;
 
 
 public class testCase_immediateReplies {
+    public static int testDelay = 15;
     public int startPort = 6000;
 
     static boolean STAT = false;
@@ -192,6 +193,7 @@ public class testCase_immediateReplies {
                 
                 if(STAT) test1[i].printStats();
                 test1[i].close();
+                Thread.sleep(testDelay);
             }
             
             System.out.println("Test1 cases passed: " + passed1 + "/" + test1Cases);
@@ -236,6 +238,7 @@ public class testCase_immediateReplies {
                     test2[i].passed = false;
                 }
                 test2[i].close();
+                Thread.sleep(testDelay);
             }
             
             System.out.println("Test2 cases passed: " + passed2 + "/" + test2Cases);
@@ -276,6 +279,7 @@ public class testCase_immediateReplies {
                     test3[i].passed = false;
                 }
                 test3[i].close();
+                Thread.sleep(testDelay);
             }
     
             System.out.println("Test3 cases passed: " + passed3 + "/" + test3Cases);
